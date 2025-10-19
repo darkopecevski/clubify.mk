@@ -69,40 +69,50 @@
 - Complicated or technical
 - Exclusive or intimidating
 
-### 2.2 Logo & Branding
+### 2.2 Logo & Branding ✅ Confirmed
 
-**Logo Concept Ideas:**
-- Football/soccer ball integrated with management/organizational elements
-- Macedonian flag colors incorporated subtly
-- Clean, modern wordmark
-- Could include shield/crest element (club tradition)
+**Logo Approach:** Text-based logo (MVP)
+
+**Design:**
+- Wordmark: "Clubify.mk"
+- Font: Bold, modern sans-serif
+- Primary version: Green (#10B981) text
+- Light backgrounds: Green text
+- Dark backgrounds: White text
+- Optional: Small football/soccer icon next to text
 
 **Logo Usage:**
-- Primary logo: Full color on light backgrounds
-- Secondary logo: White on dark backgrounds
-- Icon-only: For app icons, favicons
+- Primary logo: Green text on light backgrounds
+- Secondary logo: White text on dark backgrounds
+- Icon-only: First letter "C" or small football icon for favicons
 - Minimum size: 32px height for digital
 
-### 2.3 Brand Colors (To Be Finalized)
+**Future:** Can be replaced with a professionally designed logo later
 
-**Recommendations:**
+### 2.3 Brand Colors ✅ Confirmed
 
-**Option 1: Bold & Energetic**
-- Primary: Football green (#10B981)
-- Secondary: Red (#EF4444)
-- Accent: Yellow (#F59E0B)
+**Selected: Bold & Energetic**
 
-**Option 2: Professional & Trust** (Recommended)
-- Primary: Deep Blue (#1E40AF)
-- Secondary: Macedonian Red (#DC2626)
-- Accent: Gold (#F59E0B)
+- **Primary:** Football Green (#10B981 / Green-500)
+- **Secondary:** Red (#EF4444 / Red-500)
+- **Accent:** Yellow (#F59E0B / Amber-500)
 
-**Option 3: Modern & Clean**
-- Primary: Slate (#0F172A)
-- Secondary: Sky Blue (#0EA5E9)
-- Accent: Green (#10B981)
+This palette conveys energy, athleticism, and youth - perfect for a football club management system.
 
-**User Decision Required:** Which color direction do you prefer?
+### 2.4 Dark Mode ✅ Confirmed
+
+**Approach:** Implement both light and dark mode from the start
+
+**Features:**
+- Theme toggle in user menu
+- System preference detection (auto-detect user's OS preference)
+- Persistent preference (saved in localStorage)
+- Smooth transition between themes
+
+**Implementation:**
+- Use next-themes package
+- shadcn/ui components support dark mode out of the box
+- All custom components designed for both themes
 
 ---
 
@@ -191,23 +201,23 @@ We'll use Tailwind's built-in color system with shadcn/ui theme variables.
 
 ## 4. Typography
 
-### 4.1 Font Families
+### 4.1 Font Families ✅ Confirmed
 
-**Primary Font: Inter** (or similar system font)
+**Primary Font: Inter** - Google Font
 - Clean, modern sans-serif
 - Excellent readability at all sizes
 - Great for UI and data tables
+- Professional and widely used
 
 ```css
 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
              Roboto, 'Helvetica Neue', Arial, sans-serif;
 ```
 
-**Alternative: System Font Stack**
-```css
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-             "Helvetica Neue", Arial, sans-serif;
-```
+**Implementation:**
+- Load via Next.js font optimization (next/font/google)
+- Variable font for optimal performance
+- Fallback to system fonts during load
 
 **Monospace (for codes, data):**
 ```css
@@ -784,35 +794,103 @@ Before deploying a new feature, verify:
 
 ---
 
-## 15. Questions to Answer Before Starting
+## 15. Design Inspiration & Reference ✅
 
-**Please confirm:**
+**Reference Dashboard:** CMS Full Form example
 
-1. **Brand Colors:** Which color option do you prefer?
-   - Option 1: Bold & Energetic (Green primary)
-   - Option 2: Professional & Trust (Blue primary) - Recommended
-   - Option 3: Modern & Clean (Slate primary)
-   - Or provide your own palette
+**Key Design Elements We'll Adopt:**
 
-2. **Logo:** Do you have an existing logo, or should we create a simple text-based logo for now?
+### Layout:
+- **Collapsible Sidebar** (240px → ~60px icon-only)
+- Clean left navigation with icons + labels
+- Grouped menu items by category (Overview, E-commerce, etc.)
+- Count badges for items (e.g., "Projects 12")
 
-3. **Dark Mode:** Should we implement dark mode from the start, or focus on light mode first?
+### Dashboard Cards:
+- **Stat Cards** in grid (4 columns on desktop)
+- Large number display with icon
+- Percentage change indicators (green ↑, red ↓)
+- Clean white cards with subtle shadows
+- Consistent spacing and padding
 
-4. **Font:** Inter font (modern, clean) or system fonts (faster loading)?
+### Charts & Data Viz:
+- Clean line charts with grid background
+- Colorful bar charts
+- Legend with color-coded dots
+- Light grid lines, minimal chrome
 
-5. **Additional Preferences:** Any specific design elements you want to see?
+### Activity Feed:
+- **System History / User Activity** pattern
+- Icon circles with colored backgrounds
+- Clear action descriptions
+- Timestamp on right
+- Role/status badges (Editor, Admin, etc.)
+- Grouped by sections
+
+### Top Bar:
+- Breadcrumb navigation
+- Global search (centered)
+- Right-aligned: Theme toggle, Notifications (with badge), Settings, User menu
+- Clean and minimal
+
+### Forms:
+- Clean input fields with labels
+- Tab navigation for sections
+- Generous spacing
+- Clear hierarchy
+
+### Typography:
+- Bold headings
+- Regular body text
+- Subtle gray for secondary text
+- Good use of font weights for hierarchy
+
+### Color Usage:
+- Mostly white/light gray backgrounds
+- Colorful accents sparingly (status badges, icons, charts)
+- Good contrast ratios
+- Clean, not overwhelming
+
+**What We'll Keep:**
+✅ Collapsible sidebar pattern
+✅ Stat card grid layout
+✅ Activity feed design
+✅ Clean top bar with breadcrumbs
+✅ Generous white space
+✅ Subtle shadows and borders
+✅ Icon usage in navigation
+✅ Count badges
+✅ Status badges with colors
+
+**What We'll Adapt:**
+- Use our green primary color instead of blue
+- Our specific navigation structure (roles-based)
+- Football-specific icons and terminology
+- Our own data visualizations (attendance, match stats)
+
+---
+
+## 16. All Design Decisions ✅ Confirmed
+
+1. **Brand Colors:** ✅ Bold & Energetic (Green primary, Red secondary, Yellow accent)
+2. **Logo:** ✅ Text-based "Clubify.mk" in bold green
+3. **Dark Mode:** ✅ Both light and dark mode from start
+4. **Font:** ✅ Inter font (Google Font)
+5. **Design Reference:** ✅ Clean dashboard style (CMS Full Form inspired)
 
 ---
 
 ## Next Steps
 
-Once you confirm the design direction:
+**Ready to start building!**
 
-1. Set up Tailwind config with chosen colors
-2. Install shadcn/ui with theme
-3. Create reusable component library
-4. Build design system playground/storybook (optional)
-5. Start building pages with consistent design
+1. Initialize Next.js with TypeScript
+2. Set up Tailwind with our green color scheme
+3. Install shadcn/ui components
+4. Configure Inter font
+5. Set up dark mode (next-themes)
+6. Create base layout (sidebar + top bar)
+7. Build first dashboard page
 
 ---
 
