@@ -44,3 +44,6 @@ next-env.d.ts
 .branches
 .temp
 .supabase
+
+# Local Netlify folder
+.netlify
