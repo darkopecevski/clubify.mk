@@ -165,9 +165,14 @@
 - [ ] Create reset password page
 - [ ] Add form validation (Zod schemas)
 - [ ] Add loading states and error handling
+- [ ] **Design & apply branded email templates** (see docs/SUPABASE_AUTH_CONFIG.md)
+  - [ ] Confirm Signup template with Clubify.mk branding
+  - [ ] Reset Password template with Clubify.mk branding
+  - [ ] Change Email template with Clubify.mk branding
+  - [ ] Magic Link template with Clubify.mk branding
 - [ ] Test: Complete auth flows (login, logout, reset)
 
-**Deliverable:** Working authentication UI
+**Deliverable:** Working authentication UI with branded email templates
 
 ### 2.3 Session Management & Middleware 📝
 - [ ] Create auth middleware for protected routes
