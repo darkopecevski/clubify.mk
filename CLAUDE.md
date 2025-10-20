@@ -101,7 +101,8 @@ This document defines the development workflow and principles for building Clubi
 
 ### Step 7: Commit & Update
 - Commit the working code
-- Update TODO.md (mark chapter as complete)
+- **Update TODO.md** (mark chapter as complete)
+- **When finishing a PHASE, update TODO.md to mark the entire phase complete**
 - Push to GitHub
 - Deploy to staging if it's a milestone
 
@@ -358,6 +359,8 @@ clubify.mk/
 - ✅ **Plan first, code second**
 - ✅ **Test each chapter before moving on**
 - ✅ **Commit working code frequently**
+- ✅ **Update TODO.md after each chapter completion**
+- ✅ **Update TODO.md after each phase completion**
 - ✅ **Communicate clearly and concisely**
 - ✅ **Follow the TODO.md roadmap**
 - ✅ **Balance testing - test what matters**

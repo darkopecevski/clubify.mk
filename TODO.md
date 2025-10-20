@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-18
+**Last Updated:** 2025-10-20
 
 ## Development Principles
 
@@ -33,19 +33,21 @@
 - [x] Create comprehensive documentation
 - [x] Set up TODO.md tracking
 
-### 0.2 Next.js Application Bootstrap 📝
-- [ ] Initialize Next.js 14+ with App Router
-- [ ] Install and configure TypeScript (strict mode)
-- [ ] Set up pnpm workspace
-- [ ] Configure ESLint + Prettier
-- [ ] Set up Tailwind CSS
-- [ ] Initialize shadcn/ui
-- [ ] Create basic project structure
-- [ ] Set up testing infrastructure (Vitest + React Testing Library)
-- [ ] Create initial layout and homepage
-- [ ] Test: Verify app runs locally and builds successfully
+### 0.2 Next.js Application Bootstrap ✅
+- [x] Initialize Next.js 15 with App Router
+- [x] Install and configure TypeScript (strict mode)
+- [x] Set up pnpm
+- [x] Configure ESLint + Prettier
+- [x] Set up Tailwind CSS v4 with green theme
+- [x] Initialize shadcn/ui component library
+- [x] Create project folder structure
+- [x] Set up testing infrastructure (Vitest + Playwright)
+- [x] Configure Inter font with next/font
+- [x] Set up dark mode with next-themes
+- [x] Create homepage with theme toggle
+- [x] Test: Build successful, deployed to Netlify
 
-**Deliverable:** Working Next.js app with "Hello World" that deploys to Netlify
+**Deliverable:** ✅ Working Next.js app deployed at https://clubifymk.netlify.app
 
 ---
 
