@@ -53,15 +53,19 @@
 
 ## Phase 1: Database Foundation
 
-### 1.1 Database Schema - Core Tables 📝
-- [ ] Create users table (extends Supabase Auth)
-- [ ] Create user_roles table
-- [ ] Create clubs table
-- [ ] Create teams table
-- [ ] Test: Verify tables created, relationships work
-- [ ] Generate TypeScript types from schema
+### 1.1 Database Schema - Core Tables ✅
+- [x] Create users table (extends Supabase Auth)
+- [x] Create user_roles table with multi-tenancy support
+- [x] Create clubs table
+- [x] Create teams table
+- [x] Add RLS policies with helper functions (is_super_admin, user_club_ids)
+- [x] Create Supabase client utilities (server, browser, middleware)
+- [x] Generate TypeScript types from schema
+- [x] Create seed data (3 clubs, 4 teams)
+- [x] Test: Verified tables, relationships, and RLS policies work
+- [x] Create /clubs demo page
 
-**Deliverable:** Core database tables with proper relationships
+**Deliverable:** ✅ Core database tables with RLS, typed clients, and working demo
 
 ### 1.2 Database Schema - Player Management 📝
 - [ ] Create players table
