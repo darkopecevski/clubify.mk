@@ -231,10 +231,21 @@ pnpm test:e2e               # Run E2E tests
 ### Supabase
 ```bash
 supabase status             # Check status
-supabase db push            # Push migrations
-supabase gen types typescript --linked > types/database.types.ts  # Generate types
+supabase migration list     # List migrations (local and remote)
+supabase migration new <name>  # Create new migration file
+supabase db push            # Push migrations to remote
+supabase gen types typescript --linked > src/types/database.types.ts  # Generate types
 supabase db reset           # Reset local DB (dev only)
+supabase login --token <token>  # Login with access token
+supabase link --project-ref <ref>  # Link to remote project
 ```
+
+**Database Migration Workflow:**
+1. Create migration: `supabase migration new feature_name`
+2. Write SQL in the generated file
+3. Push to remote: `supabase db push` (auto-prompts for confirmation)
+4. Regenerate types: `supabase gen types typescript --linked > src/types/database.types.ts`
+5. Verify build: `pnpm build`
 
 ### Git
 ```bash
@@ -351,6 +362,59 @@ clubify.mk/
 1. Clear browser cookies
 2. Check Supabase Auth settings
 3. Verify environment variables
+
+---
+
+## Database Schema Overview
+
+### Phase 1: Database Foundation (✅ Complete)
+
+**22 Tables across 4 sub-phases:**
+
+**Phase 1.1 - Core Tables:**
+- `users` - User profiles (extends auth.users)
+- `clubs` - Football clubs
+- `user_roles` - Multi-tenant role assignments (5 roles: super_admin, club_admin, coach, parent, player)
+- `teams` - Teams within clubs
+
+**Phase 1.2 - Player Management:**
+- `players` - Player profiles with medical info
+- `player_parents` - Parent-player relationships
+- `team_players` - Team roster assignments
+- `coaches` - Coach profiles with licenses
+- `team_coaches` - Coach-team assignments
+
+**Phase 1.3 - Training & Matches:**
+- `training_recurrences` - Recurring training schedules
+- `training_sessions` - Individual training sessions
+- `attendance` - Player attendance tracking
+- `matches` - Match details
+- `match_squads` - Squad selections
+- `match_statistics` - Player match stats
+
+**Phase 1.4 - Payments & Communication:**
+- `subscription_fees` - Monthly fees per team
+- `discounts` - Player-specific discounts
+- `payment_records` - Payment tracking
+- `announcements` - Club news
+- `media_gallery` - Photos/videos
+- `notifications` - In-app notifications
+- `notification_preferences` - User notification settings
+
+**Key Database Features:**
+- ✅ Comprehensive RLS policies on all tables
+- ✅ Helper functions: `is_super_admin()`, `user_club_ids()`, `user_has_club_role()`
+- ✅ Automatic `updated_at` triggers
+- ✅ Foreign key relationships with CASCADE rules
+- ✅ Check constraints for data integrity
+- ✅ Multi-tenant architecture (club-scoped data)
+
+**Seed Data Available:**
+- `supabase/seed.sql` - 3 clubs, 4 teams
+- `supabase/seed_players.sql` - 8 players
+- `supabase/seed_coaches_parents.sql` - 2 coaches, 3 parents
+- `supabase/seed_training_matches.sql` - Training sessions and matches
+- `supabase/seed_payments_communication.sql` - Payments and announcements
 
 ---
 
