@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-20 (Phase 2.1 Complete - Auth Infrastructure Ready!)
+**Last Updated:** 2025-10-20 (Phase 2.2 Complete - Authentication UI Built!)
 
 ## Development Principles
 
@@ -158,21 +158,26 @@
 
 **Deliverable:** ✅ Auth infrastructure ready (⏳ Manual dashboard config pending)
 
-### 2.2 Authentication UI 📝
-- [ ] Create login page (/login)
-- [ ] Create signup page (admin-only, not public)
-- [ ] Create forgot password page
-- [ ] Create reset password page
-- [ ] Add form validation (Zod schemas)
-- [ ] Add loading states and error handling
+### 2.2 Authentication UI ✅
+- [x] Create useAuth hook (signUp, signIn, signOut, resetPassword, updatePassword)
+- [x] Create useUser hook (session management, auth state listening)
+- [x] Create Zod validation schemas (signIn, signUp, forgotPassword, resetPassword)
+- [x] Create login page (/login) with email/password
+- [x] Create signup page (/signup) with full name, email, password
+- [x] Create forgot password page (/forgot-password)
+- [x] Create reset password page (/reset-password)
+- [x] Add form validation with Zod schemas
+- [x] Add loading states and error handling
+- [x] Add show/hide password toggles
+- [x] Add success states with redirects
 - [ ] **Design & apply branded email templates** (see docs/SUPABASE_AUTH_CONFIG.md)
   - [ ] Confirm Signup template with Clubify.mk branding
   - [ ] Reset Password template with Clubify.mk branding
   - [ ] Change Email template with Clubify.mk branding
   - [ ] Magic Link template with Clubify.mk branding
-- [ ] Test: Complete auth flows (login, logout, reset)
+- [ ] Test: Complete auth flows (login, logout, reset, signup)
 
-**Deliverable:** Working authentication UI with branded email templates
+**Deliverable:** ✅ Authentication UI complete (⏳ Email templates & testing pending)
 
 ### 2.3 Session Management & Middleware 📝
 - [ ] Create auth middleware for protected routes
