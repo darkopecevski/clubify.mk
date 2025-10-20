@@ -67,15 +67,19 @@
 
 **Deliverable:** ✅ Core database tables with RLS, typed clients, and working demo
 
-### 1.2 Database Schema - Player Management 📝
-- [ ] Create players table
-- [ ] Create player_parents table (many-to-many)
-- [ ] Create team_players table (many-to-many)
-- [ ] Create coaches table
-- [ ] Create team_coaches table (many-to-many)
-- [ ] Test: Insert sample data, verify relationships
+### 1.2 Database Schema - Player Management ✅
+- [x] Create players table with personal, medical, and football info
+- [x] Create player_parents table (many-to-many)
+- [x] Create team_players table (many-to-many with join/leave dates)
+- [x] Create coaches table with licensing and experience
+- [x] Create team_coaches table (many-to-many with roles)
+- [x] Add RLS policies (simplified to avoid recursion)
+- [x] Update TypeScript types
+- [x] Insert 8 sample players (5 U10, 3 U12)
+- [x] Assign players to teams
+- [x] Test: Verify relationships and API queries work
 
-**Deliverable:** Player and coach tables with test data
+**Deliverable:** ✅ Player and coach tables with RLS, types, and test data
 
 ### 1.3 Database Schema - Training & Matches 📝
 - [ ] Create training_sessions table
