@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-20 (Phase 1.4 Complete - Database Foundation Done!)
+**Last Updated:** 2025-10-20 (Phase 2.1 Complete - Auth Infrastructure Ready!)
 
 ## Development Principles
 
@@ -142,14 +142,21 @@
 
 ## Phase 2: Authentication & Authorization
 
-### 2.1 Supabase Auth Setup 📝
-- [ ] Configure Supabase Auth settings
-- [ ] Set up email templates (welcome, reset password)
-- [ ] Configure redirect URLs
-- [ ] Create Supabase client utilities (client, server, admin)
+### 2.1 Supabase Auth Setup ✅
+- [x] Create Supabase client utilities (browser, server, admin, middleware)
+- [x] Create middleware for automatic session refresh
+- [x] Create auth callback route (/auth/callback)
+- [x] Create auth error page (/auth/error)
+- [x] Add URL helper utilities
+- [x] Set up environment variables (NEXT_PUBLIC_SITE_URL)
+- [x] Document email templates for manual configuration
+- [x] Document redirect URLs for manual configuration
+- [ ] **Manual Step:** Configure Supabase Auth settings in dashboard (see docs/PHASE_2_1_SETUP.md)
+- [ ] **Manual Step:** Set up email templates in dashboard
+- [ ] **Manual Step:** Configure redirect URLs in dashboard
 - [ ] Test: Manual signup/login in Supabase dashboard
 
-**Deliverable:** Supabase Auth configured and ready
+**Deliverable:** ✅ Auth infrastructure ready (⏳ Manual dashboard config pending)
 
 ### 2.2 Authentication UI 📝
 - [ ] Create login page (/login)
