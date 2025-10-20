@@ -432,6 +432,260 @@ clubify.mk/
 
 ---
 
+---
+
+## Phase 2: Authentication & Authorization (✅ Complete)
+
+### Authentication Infrastructure
+
+**Supabase Clients:**
+- `src/lib/supabase/client.ts` - Browser client (client components)
+- `src/lib/supabase/server.ts` - Server client (server components, API routes)
+- `src/lib/supabase/admin.ts` - Admin client with service role (bypasses RLS)
+- `src/lib/supabase/middleware.ts` - Middleware client for session refresh
+
+**Middleware:**
+- `src/middleware.ts` - Automatic session refresh on all routes
+- Runs before every request to keep tokens fresh
+- Handles auth state changes transparently
+
+**Auth Routes:**
+- `/auth/callback` - Handles email verification, password reset redirects
+- `/auth/error` - Error page for failed auth attempts
+- `/login` - Login page with email/password
+- `/signup` - Signup page with email verification
+- `/forgot-password` - Request password reset link
+- `/reset-password` - Set new password after reset
+- `/unauthorized` - Access denied page
+
+### Authentication Hooks
+
+**`useAuth()` Hook:**
+```tsx
+const { signUp, signIn, signOut, resetPassword, updatePassword, loading, error } = useAuth();
+```
+- All auth operations in one hook
+- Automatic error handling
+- Loading states
+- Returns user data on success
+
+**`useUser()` Hook:**
+```tsx
+const { user, loading } = useUser();
+```
+- Get current authenticated user
+- Auto-updates on auth state changes
+- Listens to Supabase auth events
+
+### Form Validation
+
+**Zod Schemas (`src/lib/validations/auth.ts`):**
+- `signInSchema` - Email + password
+- `signUpSchema` - Email, password, confirmPassword, fullName
+- `forgotPasswordSchema` - Email only
+- `resetPasswordSchema` - Password + confirmPassword
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one number
+
+### Role-Based Access Control (RBAC)
+
+**Role Hierarchy (lowest to highest):**
+1. `parent` - Can view their children's data
+2. `coach` - Can manage teams and players
+3. `club_admin` - Can manage entire club
+4. `super_admin` - Can manage all clubs (full system access)
+
+**`useUserRole()` Hook:**
+```tsx
+const {
+  roles,              // Array of user's roles
+  isLoading,          // Loading state
+  error,              // Error if any
+  hasRole,            // Check specific role
+  isSuperAdmin,       // Is super admin?
+  isClubAdmin,        // Is club admin?
+  isCoach,            // Is coach?
+  isParent,           // Is parent?
+  clubIds,            // Club IDs user has access to
+} = useUserRole();
+```
+
+**Role Utilities (`src/lib/auth/roles.ts`):**
+- `hasRole(roles, role, clubId?)` - Check specific role
+- `hasMinimumRole(roles, minimumRole, clubId?)` - Check role hierarchy
+- `isSuperAdmin(roles)` - Is super admin?
+- `isClubAdmin(roles, clubId?)` - Is club admin?
+- `hasClubAccess(roles, clubId)` - Has access to club?
+- `getHighestRole(roles)` - Get user's highest role
+
+**Page Protection:**
+```tsx
+import { ProtectedRoute } from "@/components/auth";
+
+// Require authentication only
+<ProtectedRoute>
+  <DashboardPage />
+</ProtectedRoute>
+
+// Require specific role
+<ProtectedRoute requireRole="club_admin">
+  <AdminPanel />
+</ProtectedRoute>
+
+// Require minimum role level
+<ProtectedRoute requireMinimumRole="coach">
+  <CoachDashboard />
+</ProtectedRoute>
+
+// Require club access
+<ProtectedRoute requireClubAccess={clubId}>
+  <ClubDetails />
+</ProtectedRoute>
+```
+
+**Conditional UI Rendering:**
+```tsx
+import { RequireRole, SuperAdminOnly, ClubAdminOnly, CoachOnly } from "@/components/auth";
+
+// Show only to super admins
+<SuperAdminOnly>
+  <DeleteButton />
+</SuperAdminOnly>
+
+// Show to club admins and above
+<ClubAdminOnly clubId={clubId}>
+  <ManageClubButton />
+</ClubAdminOnly>
+
+// Show to coaches and above
+<CoachOnly clubId={clubId}>
+  <ManagePlayersButton />
+</CoachOnly>
+
+// Custom requirements with fallback
+<RequireRole
+  minimumRole="coach"
+  clubId={clubId}
+  fallback={<p>You need coach access</p>}
+>
+  <CoachTools />
+</RequireRole>
+```
+
+### Environment Variables
+
+**Required for Auth:**
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+SUPABASE_SERVICE_ROLE_KEY=xxx
+
+# App URLs
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=https://clubifymk.netlify.app
+```
+
+### Supabase Auth Configuration
+
+**Manual Steps Required (see `docs/PHASE_2_1_SETUP.md`):**
+1. Set Site URL and Redirect URLs in dashboard
+2. Enable Email provider with confirmation
+3. Customize email templates (4 templates)
+4. Configure rate limits
+5. Set password policies
+
+**Redirect URLs to Configure:**
+- `http://localhost:3000/**` (local dev)
+- `https://clubifymk.netlify.app/**` (production)
+- `https://*--clubifymk.netlify.app/**` (preview deployments)
+
+### Testing Auth & RBAC
+
+**Test Different Roles:**
+```sql
+-- Create test users with different roles
+INSERT INTO user_roles (user_id, club_id, role)
+VALUES
+  ('user-uuid', NULL, 'super_admin'),           -- Super admin
+  ('user-uuid', 'club-uuid', 'club_admin'),     -- Club admin
+  ('user-uuid', 'club-uuid', 'coach'),          -- Coach
+  ('user-uuid', 'club-uuid', 'parent');         -- Parent
+```
+
+**Auth Flow Testing:**
+- ✅ Signup with email verification
+- ✅ Login with email/password
+- ✅ Logout
+- ✅ Forgot password flow
+- ✅ Reset password flow
+- ✅ Session persistence across page reloads
+- ✅ Auto token refresh
+
+**RBAC Testing:**
+- ✅ Page protection redirects work
+- ✅ Unauthorized page shows for insufficient permissions
+- ✅ UI elements hide based on roles
+- ✅ Role hierarchy enforced correctly
+
+### Key Learnings
+
+**Auth Best Practices:**
+1. Always use `ProtectedRoute` for pages - don't rely on UI hiding alone
+2. Validate roles server-side - client-side is for UX only
+3. RLS policies are the real security - RBAC is additional layer
+4. Check roles in API routes - never trust client
+5. Use middleware for automatic session refresh
+6. Handle loading and error states properly
+
+**Common Patterns:**
+```tsx
+// Check if user can edit something
+function canEdit(userRoles: UserRole[], clubId: string) {
+  return hasMinimumRole(userRoles, "club_admin", clubId);
+}
+
+// Show different UI based on role
+function Dashboard() {
+  const { isSuperAdmin, isClubAdmin } = useUserRole();
+
+  if (isSuperAdmin()) return <SuperAdminDashboard />;
+  if (isClubAdmin()) return <ClubAdminDashboard />;
+  return <UserDashboard />;
+}
+
+// Protect API route
+async function DELETE(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (!isSuperAdmin(roles)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Proceed with deletion...
+}
+```
+
+### Documentation
+
+**Phase 2 Docs:**
+- `docs/PHASE_2_1_SETUP.md` - Auth setup instructions
+- `docs/SUPABASE_AUTH_CONFIG.md` - Email template configurations
+- `docs/RBAC_USAGE.md` - Complete RBAC usage guide with examples
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**
