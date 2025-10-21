@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { ProtectedRoute } from "@/components/auth";
 import { useAuth } from "@/hooks/use-auth";
 import { useUser } from "@/hooks/use-user";
@@ -17,6 +18,8 @@ import {
   Search,
   LogOut,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const navigation = [
@@ -34,6 +37,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const { signOut, loading } = useAuth();
   const { user } = useUser();
+  const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -152,6 +156,19 @@ export default function AdminLayout({
 
             {/* Right side actions */}
             <div className="flex items-center gap-2">
+              {/* Theme toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
+
               {/* Notifications */}
               <button className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
                 <Bell className="h-5 w-5" />
