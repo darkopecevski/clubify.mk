@@ -1,8 +1,46 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
-export default function Home() {
+async function getUserDashboard() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  // Fetch user roles
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role, club_id")
+    .eq("user_id", user.id);
+
+  if (!roles || roles.length === 0) {
+    return null;
+  }
+
+  // Check roles in hierarchy order
+  const hasRole = (role: string) => roles.some(r => r.role === role);
+
+  if (hasRole("super_admin")) return "/admin";
+  if (hasRole("club_admin")) return "/club";
+  if (hasRole("coach")) return "/coach";
+  if (hasRole("parent")) return "/parent";
+  if (hasRole("player")) return "/player";
+
+  return null;
+}
+
+export default async function Home() {
+  // Redirect authenticated users to their dashboard
+  const dashboardUrl = await getUserDashboard();
+  if (dashboardUrl) {
+    redirect(dashboardUrl);
+  }
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -28,7 +66,9 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex gap-4">
-            <Button size="lg">Get Started</Button>
+            <Link href="/login">
+              <Button size="lg">Get Started</Button>
+            </Link>
             <Button size="lg" variant="outline">
               Learn More
             </Button>

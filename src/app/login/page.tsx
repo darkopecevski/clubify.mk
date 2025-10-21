@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInInput } from "@/lib/validations/auth";
 import { useAuth } from "@/hooks/use-auth";
+import { getRoleDashboardUrl } from "@/lib/auth/redirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,8 +31,9 @@ export default function LoginPage() {
     }
 
     if (user) {
-      // Redirect to dashboard or home
-      router.push("/");
+      // Get the appropriate dashboard based on user role
+      const dashboardUrl = await getRoleDashboardUrl();
+      router.push(dashboardUrl);
       router.refresh();
     }
   };
