@@ -32,11 +32,21 @@ export async function POST(
 
     // Parse request body
     const body = await request.json();
-    const { email, fullName } = body;
+    const { email, fullName, userId } = body;
 
-    if (!email || !fullName) {
+    // Check if this is for an existing user or new user
+    const isExistingUser = !!userId;
+
+    if (!isExistingUser && (!email || !fullName)) {
       return NextResponse.json(
-        { error: "Email and full name are required" },
+        { error: "Email and full name are required for new users" },
+        { status: 400 }
+      );
+    }
+
+    if (isExistingUser && !userId) {
+      return NextResponse.json(
+        { error: "User ID is required for existing users" },
         { status: 400 }
       );
     }
@@ -52,52 +62,83 @@ export async function POST(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    // Create user with admin client
-    const adminClient = createAdminClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    let targetUserId: string;
+    let userEmail: string;
+    let userFullName: string;
+    let defaultPassword: string | undefined;
 
-    // Default password: ClubAdmin2024!
-    const defaultPassword = "ClubAdmin2024!";
+    if (isExistingUser) {
+      // Assign existing user as club admin
+      targetUserId = userId;
 
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password: defaultPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-      },
-    });
+      // Get user details
+      const { data: existingUser, error: userError } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .eq("id", userId)
+        .single();
 
-    if (authError) {
-      return NextResponse.json(
-        { error: authError.message },
-        { status: 400 }
-      );
-    }
+      if (userError || !existingUser) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
 
-    const newUser = authData.user;
+      // Get user email from auth
+      const adminClient = createAdminClient(supabaseUrl, supabaseServiceKey);
+      const { data: authUser } = await adminClient.auth.admin.getUserById(userId);
 
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from("users")
-      .insert({
-        id: newUser.id,
-        full_name: fullName,
+      userEmail = authUser.user?.email || "";
+      userFullName = existingUser.full_name || "";
+    } else {
+      // Create new user with admin client
+      const adminClient = createAdminClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
       });
 
-    if (profileError && !profileError.message.includes("duplicate")) {
-      console.error("Profile creation error:", profileError);
+      // Default password: ClubAdmin2024!
+      defaultPassword = "ClubAdmin2024!";
+
+      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+        email,
+        password: defaultPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+        },
+      });
+
+      if (authError) {
+        return NextResponse.json(
+          { error: authError.message },
+          { status: 400 }
+        );
+      }
+
+      const newUser = authData.user;
+      targetUserId = newUser.id;
+      userEmail = newUser.email || email;
+      userFullName = fullName;
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from("users")
+        .insert({
+          id: newUser.id,
+          full_name: fullName,
+        });
+
+      if (profileError && !profileError.message.includes("duplicate")) {
+        console.error("Profile creation error:", profileError);
+      }
     }
 
     // Assign club_admin role
     const { error: roleError } = await supabase
       .from("user_roles")
       .insert({
-        user_id: newUser.id,
+        user_id: targetUserId,
         club_id: id,
         role: "club_admin",
       });
@@ -112,12 +153,14 @@ export async function POST(
     return NextResponse.json({
       success: true,
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        full_name: fullName,
+        id: targetUserId,
+        email: userEmail,
+        full_name: userFullName,
         default_password: defaultPassword,
       },
-      message: `Club admin created successfully for ${club.name}`,
+      message: isExistingUser
+        ? `${userFullName} assigned as club admin for ${club.name}`
+        : `Club admin created successfully for ${club.name}`,
     });
   } catch (error) {
     console.error("Error creating club admin:", error);

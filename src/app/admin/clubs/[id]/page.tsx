@@ -15,6 +15,12 @@ type ClubAdmin = {
   email: string;
 };
 
+type ExistingUser = {
+  id: string;
+  email: string;
+  full_name: string;
+};
+
 export default function EditClubPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const supabase = createClient();
@@ -27,10 +33,13 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
   const [admins, setAdmins] = useState<ClubAdmin[]>([]);
   const [adminsLoading, setAdminsLoading] = useState(true);
   const [showAdminForm, setShowAdminForm] = useState(false);
-  const [adminFormData, setAdminFormData] = useState({ email: "", fullName: "" });
+  const [adminFormMode, setAdminFormMode] = useState<"existing" | "new">("existing");
+  const [adminFormData, setAdminFormData] = useState({ email: "", fullName: "", userId: "" });
   const [adminFormError, setAdminFormError] = useState("");
   const [adminFormLoading, setAdminFormLoading] = useState(false);
   const [createdAdmin, setCreatedAdmin] = useState<{ email: string; password: string } | null>(null);
+  const [existingUsers, setExistingUsers] = useState<ExistingUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const {
     register,
@@ -99,6 +108,33 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
     fetchAdmins();
   }, [params.id]);
 
+  // Fetch existing users when modal opens
+  useEffect(() => {
+    if (showAdminForm && adminFormMode === "existing") {
+      async function fetchUsers() {
+        setUsersLoading(true);
+        try {
+          const response = await fetch("/api/admin/users");
+          if (response.ok) {
+            const data = await response.json();
+            // Filter out users who are already admins of this club
+            const adminUserIds = admins.map(a => a.user_id);
+            const availableUsers = (data.users || []).filter(
+              (u: ExistingUser) => !adminUserIds.includes(u.id)
+            );
+            setExistingUsers(availableUsers);
+          }
+        } catch (err) {
+          console.error("Error fetching users:", err);
+        } finally {
+          setUsersLoading(false);
+        }
+      }
+
+      fetchUsers();
+    }
+  }, [showAdminForm, adminFormMode, admins]);
+
   const generateSlug = () => {
     if (watchName) {
       const slug = watchName
@@ -166,23 +202,29 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
     setAdminFormError("");
 
     try {
+      const requestBody = adminFormMode === "existing"
+        ? { userId: adminFormData.userId }
+        : { email: adminFormData.email, fullName: adminFormData.fullName };
+
       const response = await fetch(`/api/admin/clubs/${params.id}/admins`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(adminFormData),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create admin");
+        throw new Error(data.error || "Failed to assign admin");
       }
 
-      // Show success with password
-      setCreatedAdmin({
-        email: data.user.email,
-        password: data.user.default_password,
-      });
+      // Show success with password only for new users
+      if (adminFormMode === "new" && data.user.default_password) {
+        setCreatedAdmin({
+          email: data.user.email,
+          password: data.user.default_password,
+        });
+      }
 
       // Refresh admins list
       const adminsResponse = await fetch(`/api/admin/clubs/${params.id}/admins`);
@@ -192,8 +234,13 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
       }
 
       // Reset form
-      setAdminFormData({ email: "", fullName: "" });
+      setAdminFormData({ email: "", fullName: "", userId: "" });
       setShowAdminForm(false);
+
+      // Show simple success for existing users
+      if (adminFormMode === "existing") {
+        // Could add a toast notification here
+      }
     } catch (err) {
       setAdminFormError((err as Error).message);
     } finally {
@@ -595,8 +642,36 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
               Add Club Administrator
             </h3>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Create a new user account for this club administrator
+              {adminFormMode === "existing"
+                ? "Select an existing user to assign as club admin"
+                : "Create a new user account for this club administrator"}
             </p>
+
+            {/* Mode Toggle */}
+            <div className="mt-4 flex gap-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-900">
+              <button
+                type="button"
+                onClick={() => setAdminFormMode("existing")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  adminFormMode === "existing"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                }`}
+              >
+                Existing User
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdminFormMode("new")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  adminFormMode === "new"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                }`}
+              >
+                New User
+              </button>
+            </div>
 
             {adminFormError && (
               <div className="mt-4 rounded-md bg-red-50 p-3 dark:bg-red-900/20">
@@ -607,51 +682,93 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
             )}
 
             <form onSubmit={handleCreateAdmin} className="mt-4 space-y-4">
-              <div>
-                <label
-                  htmlFor="fullName"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  value={adminFormData.fullName}
-                  onChange={(e) =>
-                    setAdminFormData({ ...adminFormData, fullName: e.target.value })
-                  }
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
-                  placeholder="John Doe"
-                />
-              </div>
+              {adminFormMode === "existing" ? (
+                <>
+                  {usersLoading ? (
+                    <div className="py-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                      Loading users...
+                    </div>
+                  ) : (
+                    <div>
+                      <label
+                        htmlFor="userId"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        Select User *
+                      </label>
+                      <select
+                        id="userId"
+                        value={adminFormData.userId}
+                        onChange={(e) =>
+                          setAdminFormData({ ...adminFormData, userId: e.target.value })
+                        }
+                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">-- Select a user --</option>
+                        {existingUsers.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.full_name} ({user.email})
+                          </option>
+                        ))}
+                      </select>
+                      {existingUsers.length === 0 && (
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          No available users. All users are already admins or you can create a new user.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      value={adminFormData.fullName}
+                      onChange={(e) =>
+                        setAdminFormData({ ...adminFormData, fullName: e.target.value })
+                      }
+                      required
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                      placeholder="John Doe"
+                    />
+                  </div>
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={adminFormData.email}
-                  onChange={(e) =>
-                    setAdminFormData({ ...adminFormData, email: e.target.value })
-                  }
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
-                  placeholder="admin@example.com"
-                />
-              </div>
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={adminFormData.email}
+                      onChange={(e) =>
+                        setAdminFormData({ ...adminFormData, email: e.target.value })
+                      }
+                      required
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                      placeholder="admin@example.com"
+                    />
+                  </div>
 
-              <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                <p className="text-xs text-blue-800 dark:text-blue-300">
-                  A default password will be generated. You&apos;ll see it after creation.
-                </p>
-              </div>
+                  <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                    <p className="text-xs text-blue-800 dark:text-blue-300">
+                      A default password will be generated. You&apos;ll see it after creation.
+                    </p>
+                  </div>
+                </>
+              )}
 
               <div className="flex justify-end gap-3">
                 <button
@@ -670,7 +787,13 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
                   disabled={adminFormLoading}
                   className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 disabled:opacity-50"
                 >
-                  {adminFormLoading ? "Creating..." : "Create Admin"}
+                  {adminFormLoading
+                    ? adminFormMode === "existing"
+                      ? "Assigning..."
+                      : "Creating..."
+                    : adminFormMode === "existing"
+                    ? "Assign Admin"
+                    : "Create Admin"}
                 </button>
               </div>
             </form>
