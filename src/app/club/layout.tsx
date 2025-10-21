@@ -25,7 +25,9 @@ import {
   Sun,
   Moon,
   Building2,
+  ArrowLeft,
 } from "lucide-react";
+import { useUserRole } from "@/hooks/use-user-role";
 
 const navigation = [
   { name: "Dashboard", href: "/club", icon: LayoutDashboard },
@@ -48,6 +50,7 @@ function ClubLayoutInner({
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
   const { selectedClub, availableClubs, setSelectedClubId } = useClubContext();
+  const { isSuperAdmin } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -107,6 +110,17 @@ function ClubLayoutInner({
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+            {/* Back to Admin button for super admins */}
+            {isSuperAdmin() && !sidebarCollapsed && (
+              <Link
+                href="/admin"
+                className="mb-4 flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                <span>Back to Admin</span>
+              </Link>
+            )}
+
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -137,7 +151,7 @@ function ClubLayoutInner({
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                    Club Admin
+                    {isSuperAdmin() ? "Super Admin" : "Club Admin"}
                   </p>
                   <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                     {user?.email}
@@ -295,7 +309,7 @@ function ClubLayoutInner({
                     <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                       <div className="p-3">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          Club Admin
+                          {isSuperAdmin() ? "Super Admin" : "Club Admin"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {user?.email}

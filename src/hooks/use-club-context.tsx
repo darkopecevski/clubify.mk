@@ -24,35 +24,60 @@ type ClubContextType = {
 const ClubContext = createContext<ClubContextType | undefined>(undefined);
 
 export function ClubProvider({ children }: { children: ReactNode }) {
-  const { clubIds, isLoading: rolesLoading } = useUserRole();
+  const { clubIds, roles, isLoading: rolesLoading } = useUserRole();
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user is super admin
+  const isSuperAdmin = roles.some((r) => r.role === "super_admin");
+
   useEffect(() => {
     async function fetchClubs() {
-      if (rolesLoading || clubIds.length === 0) {
-        setLoading(false);
+      if (rolesLoading) {
         return;
       }
 
+      // Check if super admin has selected a club from admin panel
+      const superAdminSelectedClub = localStorage.getItem("superAdminSelectedClub");
+
       try {
         const supabase = createClient();
-        const { data, error: fetchError } = await supabase
+        let query = supabase
           .from("clubs")
           .select("id, name, slug, city, logo_url")
-          .in("id", clubIds)
           .eq("is_active", true)
           .order("name");
+
+        // If super admin, fetch all clubs. Otherwise, fetch only assigned clubs
+        if (!isSuperAdmin) {
+          if (clubIds.length === 0) {
+            setLoading(false);
+            return;
+          }
+          query = query.in("id", clubIds);
+        }
+
+        const { data, error: fetchError } = await query;
 
         if (fetchError) throw fetchError;
 
         setAvailableClubs(data || []);
 
+        // If super admin selected a club from admin panel, use that
+        if (isSuperAdmin && superAdminSelectedClub && data) {
+          const club = data.find((c) => c.id === superAdminSelectedClub);
+          if (club) {
+            setSelectedClubId(club.id);
+            setSelectedClub(club);
+            // Clear the stored selection after use
+            localStorage.removeItem("superAdminSelectedClub");
+          }
+        }
         // Auto-select first club if none selected
-        if (!selectedClubId && data && data.length > 0) {
+        else if (!selectedClubId && data && data.length > 0) {
           setSelectedClubId(data[0].id);
           setSelectedClub(data[0]);
         } else if (selectedClubId && data) {
@@ -67,7 +92,7 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     }
 
     fetchClubs();
-  }, [clubIds, rolesLoading, selectedClubId]);
+  }, [clubIds, rolesLoading, selectedClubId, isSuperAdmin, roles]);
 
   const handleSetSelectedClubId = (clubId: string) => {
     setSelectedClubId(clubId);
