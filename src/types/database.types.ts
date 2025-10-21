@@ -165,6 +165,7 @@ export type Database = {
           name: string
           slug: string
           updated_at: string
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -180,6 +181,7 @@ export type Database = {
           name: string
           slug: string
           updated_at?: string
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -195,6 +197,7 @@ export type Database = {
           name?: string
           slug?: string
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
