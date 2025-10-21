@@ -698,6 +698,8 @@ async function DELETE(req: Request) {
 - Replaced emoji icons with professional Lucide React icons
 - Color-coded stat cards with trend indicators
 - Proper spacing and visual hierarchy
+- User dropdown menu with sign out in header and sidebar
+- "Switch to Club View" selector for managing any club directly
 
 **Theme Switching (Tailwind v4 Dark Mode):**
 - Implemented light/dark mode toggle with next-themes
@@ -707,7 +709,7 @@ async function DELETE(req: Request) {
 - Proper CSS variable definitions for both `.light` and `.dark` classes
 
 **Technical Implementation:**
-- `src/app/admin/layout.tsx` - Collapsible sidebar, responsive header, theme toggle
+- `src/app/admin/layout.tsx` - Collapsible sidebar, responsive header, theme toggle, club selector
 - `src/app/admin/page.tsx` - Professional dashboard with stat cards
 - `src/app/globals.css` - Tailwind v4 dark mode with `@custom-variant dark (&:where(.dark, .dark *))`
 - No `tailwind.config.js` needed for dark mode in v4 (CSS-based configuration)
@@ -733,6 +735,10 @@ async function DELETE(req: Request) {
 - Club activation/deactivation toggle
 - Auto-generated slugs from club names
 - All fields: name, slug, city, founded_year, contact info, logo, description
+- Unified form layout between create and edit pages (2-column responsive grid)
+- Club admin management per club (create new users or assign existing)
+- Default password generation for new club admins (ClubAdmin2024!)
+- List and manage club administrators for each club
 
 **User Management:**
 - Users list with role badges (color-coded by role)
@@ -740,12 +746,95 @@ async function DELETE(req: Request) {
 - Club-specific role assignment (club_admin, coach)
 - Parent-child relationships displayed
 - Custom database function for fetching users with emails
+- API endpoint to list all users (for admin assignment)
+
+**Club Admin User Management:**
+- `POST /api/admin/clubs/[id]/admins` - Create new club admin or assign existing user
+- `GET /api/admin/clubs/[id]/admins` - List all admins for a club
+- `GET /api/admin/users` - List all users in system (for assignment)
+- Modal with two modes: "Existing User" (dropdown selector) or "New User" (create form)
+- Auto-filters already assigned admins from selection list
+- Success modal displays temporary credentials for new users
+
+**Super Admin Club Management:**
+- Can switch to any club's admin view via "Switch to Club View" button
+- Stores selected club in localStorage for seamless transition
+- Full club admin capabilities when viewing a specific club
+- "Back to Admin" button in club view to return to admin panel
+- Visual indicators showing "Super Admin" status when in club view
 
 **Role System:**
 - 5 roles: super_admin, club_admin, coach, parent, player
 - Visual role badges with distinct colors
 - Role hierarchy enforced in UI and database
 - Protected routes with `ProtectedRoute` component
+- Super admins can access all club admin features seamlessly
+
+---
+
+## Phase 4: Club Admin Dashboard (✅ Phase 4.1 Complete)
+
+### Phase 4.1: Dashboard Foundation ✅
+
+**Unified Layout System:**
+- Professional sidebar layout matching admin portal
+- Collapsible sidebar with navigation links
+- Full-width responsive header with search, notifications, theme toggle
+- User dropdown menu with sign out option
+- Sign out button in sidebar footer
+- Mobile-first responsive design (drawer on mobile)
+- "Back to Admin" button for super admins viewing club
+
+**Club Context Management:**
+- `ClubProvider` context for managing selected club
+- `useClubContext()` hook for accessing club data
+- Multi-club support for users with multiple club admin roles
+- Club selector dropdown (shows when user has 2+ clubs)
+- Auto-selects first club on initial load
+- Supports super admin viewing all clubs
+- Uses localStorage for super admin club selection
+
+**Dashboard Features:**
+- Real-time statistics: teams, players, coaches, upcoming matches
+- Color-coded stat cards with icons (blue, purple, green, orange)
+- Upcoming matches section (next 7 days) with match details
+- Recently added players section
+- Empty states with call-to-action buttons
+- "Add Player" quick action button
+- Dynamic data based on selected club
+
+**Role-Based Redirects:**
+- `getRoleDashboardUrl()` utility for determining landing page
+- Automatic redirect on login based on user role
+- Home page auto-redirects authenticated users to their dashboard
+- Role hierarchy: player < parent < coach < club_admin < super_admin
+- Each role has specific landing page (/player, /parent, /coach, /club, /admin)
+
+**Navigation Structure:**
+- Dashboard - Overview and quick stats
+- Teams - Team management
+- Players - Player management
+- Coaches - Coach management
+- Matches - Match scheduling and results
+- Payments - Financial management
+- Settings - Club configuration
+
+**Technical Implementation:**
+- `src/app/club/layout.tsx` - Main layout with sidebar, header, club selector
+- `src/app/club/page.tsx` - Server component wrapper
+- `src/app/club/page-client.tsx` - Client component with dashboard logic
+- `src/hooks/use-club-context.tsx` - Club context and provider
+- `src/lib/auth/redirect.ts` - Role-based redirect logic
+- `src/app/page.tsx` - Updated with auto-redirect for authenticated users
+- `src/app/login/page.tsx` - Updated to redirect based on role
+
+**Key Features:**
+- Dashboard updates when switching between clubs
+- Super admins see all clubs in selector
+- Club admins see only their assigned clubs
+- Proper loading and error states
+- TypeScript types for all data structures
+- Dark mode support throughout
 
 ---
 

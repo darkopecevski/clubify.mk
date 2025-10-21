@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-21 (Phase 3 COMPLETE! 🎉 - Super Admin Portal Ready!)
+**Last Updated:** 2025-10-21 (Phase 4.1 COMPLETE! 🎉 - Club Admin Dashboard Ready!)
 
 ## Development Principles
 
@@ -275,6 +275,9 @@
 - Full club management (CRUD operations)
 - User management with role assignment
 - Parent-child relationship display
+- Super admin club admin management (create/assign users as club admins)
+- Super admin club switching (seamless admin↔club view transitions)
+- Unified layouts with sign-out buttons
 - All features tested and deployed
 
 ---
@@ -291,9 +294,14 @@
 - [x] Create navigation menu (Dashboard, Teams, Players, Coaches, Matches, Training, Payments, Settings)
 - [x] Protected with ProtectedRoute (club_admin minimum role)
 - [x] Responsive design matching super admin portal
+- [x] Super admin support (can view any club via club selector)
+- [x] "Back to Admin" button for super admins
+- [x] Club selector dropdown for admins with multiple clubs
+- [x] Auto-redirect based on role (super_admin→/admin, club_admin→/club)
+- [x] Unified form layouts (club create/edit matching)
 - [x] Test: Dashboard shows correct club data only
 
-**Deliverable:** ✅ Club admin dashboard complete
+**Deliverable:** ✅ Club admin dashboard complete with full super admin integration
 
 ### 4.2 Team Management 📝
 - [ ] Create teams list page
@@ -901,19 +909,21 @@
 
 **Now:** Phase 4 - Club Admin Portal 📝
 
-**Next:** Phase 4.1 - Club Admin Dashboard
+**Next:** Phase 4.2 - Team Management
 
 **Completed Recently:**
+- ✅ Phase 4.1 - Club Admin Dashboard (with super admin integration)
 - ✅ Phase 3 - Complete Super Admin Portal (UI redesign + theme switcher)
 - ✅ Phase 2 - Complete Auth & RBAC system with hooks
 - ✅ Phase 1 - Database Foundation (22 tables)
 
-**Phase 3 Complete:**
-- ✅ Professional responsive UI with collapsible sidebar
-- ✅ Dark/light theme toggle (Tailwind v4)
-- ✅ Dashboard with real-time stats
-- ✅ Full club CRUD management
-- ✅ User management with multi-role assignment
+**Phase 4.1 Complete:**
+- ✅ Club admin dashboard with stats and widgets
+- ✅ Club context hook for multi-club management
+- ✅ Super admin can switch to any club view
+- ✅ "Back to Admin" button for super admins
+- ✅ Role-based auto-redirects
+- ✅ Unified layouts and forms
 - ✅ All features tested and deployed
 
 ---
@@ -928,6 +938,6 @@
 
 ---
 
-**Last Review:** 2025-10-20
-**Progress:** Phase 1 Complete! (Database Foundation - All 22 tables)
-**Next Milestone:** Phase 2 - Authentication & Authorization
+**Last Review:** 2025-10-21
+**Progress:** Phase 4.1 Complete! (Club Admin Dashboard with Super Admin Integration)
+**Next Milestone:** Phase 4.2 - Team Management
