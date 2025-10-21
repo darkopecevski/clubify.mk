@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 type UserWithRoles = {
   id: string;
   email: string;
