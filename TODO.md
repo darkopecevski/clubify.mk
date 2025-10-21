@@ -232,17 +232,20 @@
 
 **Deliverable:** ✅ Full club CRUD management for super admin
 
-### 3.3 User Management (Super Admin) ⏳
-- [ ] Create users list page with roles display
-- [ ] Show user info: email, name, roles, clubs
-- [ ] Create "Assign Role" functionality
-- [ ] Support multi-role assignment per user
-- [ ] Support club-specific roles (club_admin, coach)
-- [ ] Remove role from user
-- [ ] Filter users by role
-- [ ] Test: Assign roles, verify access changes
+### 3.3 User Management (Super Admin) ✅
+- [x] Create users list page with roles display
+- [x] Show user info: email, name, roles, clubs
+- [x] Show parent-child relationships in users list
+- [x] Create "Assign Role" functionality
+- [x] Support multi-role assignment per user
+- [x] Support club-specific roles (club_admin, coach)
+- [x] Remove role from user
+- [x] Created custom database function to get users with emails
+- [x] Display children on user details page with clubs
+- [x] Test: Assign roles working, parent relationships displayed
+- [ ] Filter users by role (future enhancement)
 
-**Deliverable:** User management with role assignment
+**Deliverable:** ✅ User management with role assignment complete
 
 ---
 
