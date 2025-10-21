@@ -22,6 +22,12 @@ type UserData = {
   full_name: string | null;
   created_at: string;
   roles: UserRole[];
+  children?: Array<{
+    player_id: string;
+    player_name: string;
+    relationship: string;
+    clubs: string[];
+  }>;
 };
 
 const ROLE_OPTIONS = ["super_admin", "club_admin", "coach", "parent", "player"] as const;
@@ -74,6 +80,7 @@ export default function UserManagePage({ params }: { params: { id: string } }) {
         full_name: data.full_name || null,
         created_at: data.created_at,
         roles,
+        children: data.children || [],
       });
     } catch (err) {
       setError((err as Error).message);
@@ -255,6 +262,35 @@ export default function UserManagePage({ params }: { params: { id: string } }) {
               {new Date(userData.created_at).toLocaleDateString()}
             </dd>
           </div>
+          {userData.children && userData.children.length > 0 && (
+            <div>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Children
+              </dt>
+              <dd className="mt-1 space-y-2">
+                {userData.children.map((child, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-md bg-gray-50 p-3 dark:bg-gray-900"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {child.player_name}
+                      </div>
+                      <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {child.relationship}
+                      </span>
+                    </div>
+                    {child.clubs.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        Club: {child.clubs.join(", ")}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
 

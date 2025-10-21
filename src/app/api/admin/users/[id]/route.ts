@@ -59,12 +59,71 @@ export async function GET(
       console.error("Error fetching roles:", rolesError);
     }
 
+    // Get children (if user is a parent)
+    const { data: parentRelations, error: parentsError } = await adminClient
+      .from("player_parents")
+      .select(`
+        relationship,
+        players (
+          id,
+          first_name,
+          last_name,
+          team_players (
+            teams (
+              id,
+              name,
+              clubs (
+                id,
+                name
+              )
+            )
+          )
+        )
+      `)
+      .eq("parent_user_id", id);
+
+    if (parentsError) {
+      console.error("Error fetching parent relations:", parentsError);
+    }
+
+    // Process children data
+    const children = (parentRelations || []).map((pr) => {
+      const player = pr.players as {
+        id: string;
+        first_name: string;
+        last_name: string;
+        team_players: Array<{
+          teams: {
+            id: string;
+            name: string;
+            clubs: { id: string; name: string } | null;
+          } | null;
+        }>;
+      } | null;
+
+      // Get unique clubs from player's teams
+      const clubs = new Set<string>();
+      player?.team_players?.forEach((tp) => {
+        if (tp.teams?.clubs?.name) {
+          clubs.add(tp.teams.clubs.name);
+        }
+      });
+
+      return {
+        player_id: player?.id || "",
+        player_name: player ? `${player.first_name} ${player.last_name}` : "Unknown",
+        relationship: pr.relationship,
+        clubs: Array.from(clubs),
+      };
+    });
+
     return NextResponse.json({
       id: user.id,
       email: user.email || "",
       full_name: user.full_name || null,
       created_at: user.created_at,
       roles: userRoles || [],
+      children: children.length > 0 ? children : [],
     });
   } catch (error) {
     console.error("Error in GET /api/admin/users/[id]:", error);
