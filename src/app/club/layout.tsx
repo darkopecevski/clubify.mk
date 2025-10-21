@@ -49,6 +49,7 @@ export default function ClubLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -141,6 +142,14 @@ export default function ClubLayout({
                   </p>
                 </div>
               </div>
+              <button
+                onClick={handleSignOut}
+                disabled={loading}
+                className="mt-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
             </div>
           )}
         </aside>
@@ -204,13 +213,48 @@ export default function ClubLayout({
 
               {/* User menu */}
               <div className="relative ml-2 hidden lg:block">
-                <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700 dark:bg-green-900/20 dark:text-green-400">
                     {user?.email?.charAt(0).toUpperCase() || "C"}
                   </div>
                   <span className="hidden xl:block">{user?.email}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
+
+                {/* Dropdown menu */}
+                {userMenuOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setUserMenuOpen(false)}
+                    />
+                    {/* Menu */}
+                    <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Club Admin
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {user?.email}
+                        </p>
+                      </div>
+                      <div className="border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={handleSignOut}
+                          disabled={loading}
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Sign out (mobile) */}
