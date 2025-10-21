@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { ProtectedRoute } from "@/components/auth";
 import { useAuth } from "@/hooks/use-auth";
 import { useUser } from "@/hooks/use-user";
+import { ClubProvider, useClubContext } from "@/hooks/use-club-context";
 import {
   LayoutDashboard,
   Users,
@@ -37,7 +38,7 @@ const navigation = [
   { name: "Settings", href: "/club/settings", icon: Settings },
 ];
 
-export default function ClubLayout({
+function ClubLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -46,10 +47,12 @@ export default function ClubLayout({
   const { signOut, loading } = useAuth();
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
+  const { selectedClub, availableClubs, setSelectedClubId } = useClubContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [clubSelectorOpen, setClubSelectorOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -61,8 +64,7 @@ export default function ClubLayout({
   };
 
   return (
-    <ProtectedRoute requireMinimumRole="club_admin">
-      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
           <div
@@ -165,6 +167,63 @@ export default function ClubLayout({
             >
               <Menu className="h-6 w-6" />
             </button>
+
+            {/* Club Selector (if multiple clubs) */}
+            {availableClubs.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setClubSelectorOpen(!clubSelectorOpen)}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                >
+                  <Building2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="hidden sm:inline">{selectedClub?.name || "Select Club"}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+
+                {clubSelectorOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setClubSelectorOpen(false)}
+                    />
+                    <div className="absolute left-0 z-20 mt-2 w-64 origin-top-left rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                      <div className="p-2">
+                        <p className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                          SELECT CLUB
+                        </p>
+                        {availableClubs.map((club) => (
+                          <button
+                            key={club.id}
+                            onClick={() => {
+                              setSelectedClubId(club.id);
+                              setClubSelectorOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                              selectedClub?.id === club.id
+                                ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                                : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <Building2 className="h-4 w-4 flex-shrink-0" />
+                            <div className="flex-1 overflow-hidden">
+                              <p className="truncate font-medium">{club.name}</p>
+                              {club.city && (
+                                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                  {club.city}
+                                </p>
+                              )}
+                            </div>
+                            {selectedClub?.id === club.id && (
+                              <div className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-400" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Search bar */}
             <div className="hidden flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 lg:flex lg:max-w-md">
@@ -274,6 +333,19 @@ export default function ClubLayout({
           </main>
         </div>
       </div>
+  );
+}
+
+export default function ClubLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ProtectedRoute requireMinimumRole="club_admin">
+      <ClubProvider>
+        <ClubLayoutInner>{children}</ClubLayoutInner>
+      </ClubProvider>
     </ProtectedRoute>
   );
 }
