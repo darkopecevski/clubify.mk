@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 
 type UserWithRoles = {
@@ -14,18 +14,18 @@ type UserWithRoles = {
 };
 
 async function getUsers() {
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
 
-  // Get all users from auth.users
-  const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+  // Get all users from auth.users using admin client
+  const { data: authData, error: authError } = await adminClient.auth.admin.listUsers();
 
   if (authError) {
     console.error("Error fetching auth users:", authError);
     return [];
   }
 
-  // Get all user roles with club names
-  const { data: userRoles, error: rolesError } = await supabase
+  // Get all user roles with club names in one query
+  const { data: userRoles, error: rolesError } = await adminClient
     .from("user_roles")
     .select(`
       user_id,
@@ -41,7 +41,7 @@ async function getUsers() {
   }
 
   // Combine users with their roles
-  const users: UserWithRoles[] = authUsers.users.map((authUser) => {
+  const users: UserWithRoles[] = authData.users.map((authUser) => {
     const roles = (userRoles || [])
       .filter((r) => r.user_id === authUser.id)
       .map((r) => ({

@@ -47,46 +47,32 @@ export default function UserManagePage({ params }: { params: { id: string } }) {
 
   async function fetchUserData() {
     try {
-      // Get user from auth
-      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(
-        params.id
-      );
+      // Fetch user data from API
+      const response = await fetch(`/api/admin/users/${params.id}`);
 
-      if (authError) throw authError;
-
-      if (!authUser?.user) {
-        setError("User not found");
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
       }
 
-      // Get user roles with club names
-      const { data: userRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select(`
-          id,
-          role,
-          club_id,
-          clubs (
-            name
-          )
-        `)
-        .eq("user_id", params.id);
+      const data = await response.json();
 
-      if (rolesError) throw rolesError;
-
-      const roles: UserRole[] = (userRoles || []).map((r) => ({
+      const roles: UserRole[] = (data.roles || []).map((r: {
+        id: string;
+        role: string;
+        club_id: string | null;
+        clubs: { name: string } | null;
+      }) => ({
         id: r.id,
         role: r.role,
         club_id: r.club_id,
-        club_name: r.clubs ? (r.clubs as { name: string }).name : null,
+        club_name: r.clubs ? r.clubs.name : null,
       }));
 
       setUserData({
-        id: authUser.user.id,
-        email: authUser.user.email || "",
-        full_name: authUser.user.user_metadata?.full_name || null,
-        created_at: authUser.user.created_at,
+        id: data.id,
+        email: data.email || "",
+        full_name: data.full_name || null,
+        created_at: data.created_at,
         roles,
       });
     } catch (err) {
