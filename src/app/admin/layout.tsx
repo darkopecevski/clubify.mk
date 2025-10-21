@@ -46,6 +46,10 @@ export default function AdminLayout({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    console.log("Current theme:", theme);
+  }, [theme]);
+
   const handleSignOut = async () => {
     await signOut();
     window.location.href = "/login";
@@ -164,7 +168,11 @@ export default function AdminLayout({
               {/* Theme toggle */}
               {mounted && (
                 <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  onClick={() => {
+                    const newTheme = theme === "dark" ? "light" : "dark";
+                    console.log("Switching theme from", theme, "to", newTheme);
+                    setTheme(newTheme);
+                  }}
                   className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                   title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                 >
