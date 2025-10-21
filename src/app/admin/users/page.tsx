@@ -14,6 +14,11 @@ type UserWithRoles = {
     club_id: string | null;
     club_name: string | null;
   }>;
+  children?: Array<{
+    player_id: string;
+    player_name: string;
+    relationship: string;
+  }>;
 };
 
 async function getUsers() {
@@ -43,7 +48,24 @@ async function getUsers() {
     console.error("Error fetching user roles:", rolesError);
   }
 
-  // Combine users with their roles
+  // Get parent-player relationships
+  const { data: parentRelations, error: parentsError } = await adminClient
+    .from("player_parents")
+    .select(`
+      parent_user_id,
+      relationship,
+      players (
+        id,
+        first_name,
+        last_name
+      )
+    `);
+
+  if (parentsError) {
+    console.error("Error fetching parent relations:", parentsError);
+  }
+
+  // Combine users with their roles and children
   const users: UserWithRoles[] = (usersData || []).map((user) => {
     const roles = (userRoles || [])
       .filter((r) => r.user_id === user.id)
@@ -53,12 +75,25 @@ async function getUsers() {
         club_name: r.clubs ? (r.clubs as { name: string }).name : null,
       }));
 
+    // Get children for this user
+    const children = (parentRelations || [])
+      .filter((pr) => pr.parent_user_id === user.id)
+      .map((pr) => {
+        const player = pr.players as { id: string; first_name: string; last_name: string } | null;
+        return {
+          player_id: player?.id || "",
+          player_name: player ? `${player.first_name} ${player.last_name}` : "Unknown",
+          relationship: pr.relationship,
+        };
+      });
+
     return {
       id: user.id,
       email: user.email || "",
       full_name: user.full_name || null,
       created_at: user.created_at,
       roles,
+      children: children.length > 0 ? children : undefined,
     };
   });
 
@@ -141,25 +176,37 @@ export default async function UsersPage() {
                     {user.email}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {user.roles.length > 0 ? (
-                        user.roles.map((roleData, idx) => (
-                          <span
-                            key={idx}
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor(roleData.role)}`}
-                          >
-                            {formatRoleName(roleData.role)}
-                            {roleData.club_name && (
-                              <span className="ml-1 text-[10px] opacity-75">
-                                ({roleData.club_name})
-                              </span>
-                            )}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles.length > 0 ? (
+                          user.roles.map((roleData, idx) => (
+                            <span
+                              key={idx}
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor(roleData.role)}`}
+                            >
+                              {formatRoleName(roleData.role)}
+                              {roleData.club_name && (
+                                <span className="ml-1 text-[10px] opacity-75">
+                                  ({roleData.club_name})
+                                </span>
+                              )}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            No roles
                           </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          No roles
-                        </span>
+                        )}
+                      </div>
+                      {user.children && user.children.length > 0 && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          <div className="font-medium">Children:</div>
+                          {user.children.map((child, idx) => (
+                            <div key={idx} className="ml-2">
+                              • {child.player_name} ({child.relationship})
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </td>
