@@ -19,11 +19,11 @@ type UserWithRoles = {
 async function getUsers() {
   const adminClient = createAdminClient();
 
-  // Get all users from auth.users using admin client
-  const { data: authData, error: authError } = await adminClient.auth.admin.listUsers();
+  // Get all users with emails using our custom function
+  const { data: usersData, error: usersError } = await adminClient.rpc("get_users_with_email");
 
-  if (authError) {
-    console.error("Error fetching auth users:", authError);
+  if (usersError) {
+    console.error("Error fetching users:", usersError);
     return [];
   }
 
@@ -44,9 +44,9 @@ async function getUsers() {
   }
 
   // Combine users with their roles
-  const users: UserWithRoles[] = authData.users.map((authUser) => {
+  const users: UserWithRoles[] = (usersData || []).map((user) => {
     const roles = (userRoles || [])
-      .filter((r) => r.user_id === authUser.id)
+      .filter((r) => r.user_id === user.id)
       .map((r) => ({
         role: r.role,
         club_id: r.club_id,
@@ -54,10 +54,10 @@ async function getUsers() {
       }));
 
     return {
-      id: authUser.id,
-      email: authUser.email || "",
-      full_name: authUser.user_metadata?.full_name || null,
-      created_at: authUser.created_at,
+      id: user.id,
+      email: user.email || "",
+      full_name: user.full_name || null,
+      created_at: user.created_at,
       roles,
     };
   });

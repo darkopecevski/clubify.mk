@@ -11,15 +11,15 @@ export async function GET(
     const supabase = await createClient();
 
     // Check if user is super_admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", currentUser.id)
       .eq("role", "super_admin")
       .single();
 
@@ -27,13 +27,18 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get user from auth.users
+    // Get user using our custom function
     const adminClient = createAdminClient();
-    const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(
-      id
-    );
+    const { data: usersData, error: usersError } = await adminClient.rpc("get_users_with_email");
 
-    if (authError || !authUser?.user) {
+    if (usersError) {
+      console.error("Error fetching users:", usersError);
+      return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+    }
+
+    const user = usersData?.find((u: { id: string }) => u.id === id);
+
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -55,10 +60,10 @@ export async function GET(
     }
 
     return NextResponse.json({
-      id: authUser.user.id,
-      email: authUser.user.email || "",
-      full_name: authUser.user.user_metadata?.full_name || null,
-      created_at: authUser.user.created_at,
+      id: user.id,
+      email: user.email || "",
+      full_name: user.full_name || null,
+      created_at: user.created_at,
       roles: userRoles || [],
     });
   } catch (error) {
