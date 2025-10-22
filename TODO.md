@@ -335,7 +335,34 @@
 - [ ] Add player profile view/edit page
 - [ ] Add ability to link existing users as parents (without creating new account)
 
-**Deliverable:** ✅ Manual player creation complete (enhancements pending)
+**Major Refactor Needed - URL-Based Club Routing:**
+- [ ] Refactor from context-based to URL-based club selection
+  - **Current Problem:** ClubProvider context causes infinite loops, localStorage hacks, complex state management
+  - **Solution:** Use `/club/[clubId]/*` pattern instead of `/club/*`
+  - **Benefits:** Bookmarkable URLs, simpler code, no context needed, better UX
+- [ ] Phase 1: Create new route structure
+  - [ ] Create `/club/[clubId]` directory
+  - [ ] Move all club routes to new structure (dashboard, teams, players, etc.)
+  - [ ] Update layout to read clubId from params, validate access
+- [ ] Phase 2: Update pages
+  - [ ] Update all pages to use clubId from params instead of context
+  - [ ] Remove useClubContext() calls
+  - [ ] Update all navigation links to include clubId
+- [ ] Phase 3: Update admin integration
+  - [ ] Make club table rows clickable → navigate to `/club/[clubId]`
+  - [ ] Update admin layout "Switch to Club View" → navigate to `/club/[clubId]`
+  - [ ] Keep "Edit" button for editing club details
+- [ ] Phase 4: Update auth redirects
+  - [ ] Update ProtectedRoute to redirect club_admins to `/club/[first-club-id]`
+  - [ ] Update super admin redirects
+  - [ ] Remove localStorage usage
+- [ ] Phase 5: Cleanup
+  - [ ] Delete ClubProvider and useClubContext hook
+  - [ ] Delete old `/club/*` routes
+  - [ ] Update all internal links
+  - [ ] Test all navigation flows thoroughly
+
+**Deliverable:** ✅ Manual player creation complete (enhancements and refactor pending)
 
 ### 4.4 Player Management - CSV Import 📝
 - [ ] Create CSV template download
