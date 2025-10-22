@@ -88,33 +88,23 @@ export async function POST(request: Request) {
       if (authError) {
         // Check if error is because user already exists
         if (authError.message?.includes("already been registered")) {
-          // Parent already has an account - paginate through all users to find them
-          let foundUser = null;
-          let page = 1;
-          const perPage = 1000;
+          // Parent already has an account - use RPC function to find them by email
+          const { data: usersWithEmail, error: rpcError } = await supabase.rpc(
+            "get_users_with_email"
+          );
 
-          while (!foundUser) {
-            const { data: usersPage, error: listError } =
-              await adminClient.auth.admin.listUsers({
-                page,
-                perPage,
-              });
-
-            if (listError) throw listError;
-
-            foundUser = usersPage.users.find((u) => u.email === parent_email);
-
-            // If we've fetched all users and still haven't found them, break
-            if (usersPage.users.length < perPage) {
-              break;
-            }
-
-            page++;
+          if (rpcError) {
+            console.error("RPC error:", rpcError);
+            throw new Error(`Failed to query users: ${rpcError.message}`);
           }
+
+          const foundUser = usersWithEmail?.find(
+            (u: { email: string }) => u.email === parent_email
+          );
 
           if (!foundUser) {
             throw new Error(
-              `Parent account with email ${parent_email} exists in auth but could not be found after searching all users.`
+              `Parent account with email ${parent_email} exists but could not be found in database.`
             );
           }
 
@@ -295,12 +285,14 @@ export async function POST(request: Request) {
     console.error("Error details:", {
       message: errorMessage,
       stack: errorDetails,
+      error: JSON.stringify(error, null, 2),
     });
 
     return NextResponse.json(
       {
         error: "Internal server error",
-        details: errorMessage, // Include error details in response
+        details: errorMessage,
+        fullError: error instanceof Error ? error.toString() : String(error),
       },
       { status: 500 }
     );
