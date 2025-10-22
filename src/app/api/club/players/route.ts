@@ -300,7 +300,7 @@ export async function POST(request: Request) {
       errorDetails = error.stack || "";
     } else if (typeof error === "object" && error !== null) {
       // Supabase errors
-      const err = error as any;
+      const err = error as { message?: string; error_description?: string };
       errorMessage = err.message || err.error_description || JSON.stringify(error);
       errorDetails = JSON.stringify(error, null, 2);
     } else {
