@@ -116,27 +116,9 @@ export async function POST(request: Request) {
           parentUserId = foundUser.id;
           parentPassword = undefined; // Don't return password for existing account
 
-          // Check if parent has a profile in users table
-          const { data: userProfile } = await supabase
-            .from("users")
-            .select("id")
-            .eq("id", parentUserId)
-            .single();
-
-          if (!userProfile) {
-            // Create parent profile in users table using admin client (bypasses RLS)
-            console.log("Creating parent profile for user:", parentUserId);
-            const adminSupabase = createAdminClient();
-            const { error: profileError } = await adminSupabase.from("users").insert({
-              id: parentUserId,
-              full_name: parent_full_name,
-            });
-
-            if (profileError) {
-              console.error("Profile creation error:", profileError);
-              throw new Error(`Failed to create parent profile: ${profileError.message}`);
-            }
-          }
+          // Note: get_users_with_email() only returns users who already have profiles
+          // (it joins users table with auth.users), so we know the profile exists.
+          // We don't need to create a profile, just ensure they have the role.
 
           // Check if parent has role for this club
           const { data: existingRole, error: roleCheckError } = await supabase
