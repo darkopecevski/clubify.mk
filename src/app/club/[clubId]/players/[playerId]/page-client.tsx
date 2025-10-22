@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUserRole } from "@/hooks/use-user-role";
+import { Trash2 } from "lucide-react";
 
 type Player = {
   id: string;
@@ -69,11 +71,14 @@ export default function PlayerProfilePage({
   clubId: string;
   playerId: string;
 }) {
+  const router = useRouter();
   const { isSuperAdmin, isClubAdmin } = useUserRole();
   const [player, setPlayer] = useState<Player | null>(null);
   const [parents, setParents] = useState<Parent[]>([]);
   const [teams, setTeams] = useState<TeamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const canEdit = isSuperAdmin() || isClubAdmin(clubId);
 
@@ -151,6 +156,30 @@ export default function PlayerProfilePage({
     fetchPlayerData();
   }, [fetchPlayerData]);
 
+  const handleDelete = async () => {
+    if (!player) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/club/players/${playerId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete player");
+      }
+
+      // Redirect to players list
+      router.push(`/club/${clubId}/players`);
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      alert(error instanceof Error ? error.message : "Failed to delete player");
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -191,12 +220,21 @@ export default function PlayerProfilePage({
         </div>
         <div className="flex gap-3">
           {canEdit && (
-            <Link
-              href={`/club/${clubId}/players/${playerId}/edit`}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-            >
-              Edit Player
-            </Link>
+            <>
+              <Link
+                href={`/club/${clubId}/players/${playerId}/edit`}
+                className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              >
+                Edit Player
+              </Link>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            </>
           )}
           <Link
             href={`/club/${clubId}/players`}
@@ -405,6 +443,40 @@ export default function PlayerProfilePage({
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Notes</h2>
           <p className="text-sm text-gray-700 dark:text-gray-300">{player.notes}</p>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Delete Player
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {player.first_name} {player.last_name}
+              </span>
+              ? This will deactivate the player and they will no longer appear in active lists.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete Player"}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

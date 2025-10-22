@@ -173,3 +173,94 @@ export async function PUT(
     );
   }
 }
+
+// DELETE /api/club/players/[playerId] - Delete (soft delete) a player
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ playerId: string }> }
+) {
+  try {
+    const { playerId } = await params;
+    const supabase = await createClient();
+
+    // Check authentication
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user has club_admin role
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, club_id")
+      .eq("user_id", user.id)
+      .in("role", ["super_admin", "club_admin"]);
+
+    if (!roles || roles.length === 0) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Get player to check club access
+    const { data: player } = await supabase
+      .from("players")
+      .select("club_id")
+      .eq("id", playerId)
+      .single();
+
+    if (!player) {
+      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+    }
+
+    // Validate club access
+    const hasAccess =
+      roles.some((r) => r.role === "super_admin") ||
+      roles.some((r) => r.role === "club_admin" && r.club_id === player.club_id);
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "You do not have access to this club" },
+        { status: 403 }
+      );
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Soft delete: set is_active to false
+    const { error: deleteError } = await adminSupabase
+      .from("players")
+      .update({ is_active: false })
+      .eq("id", playerId);
+
+    if (deleteError) {
+      console.error("Player delete error:", deleteError);
+      throw new Error(`Failed to delete player: ${deleteError.message}`);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Player deactivated successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting player:", error);
+
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "object" && error !== null) {
+      const err = error as { message?: string; error_description?: string };
+      errorMessage = err.message || err.error_description || JSON.stringify(error);
+    } else {
+      errorMessage = String(error);
+    }
+
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: errorMessage,
+      },
+      { status: 500 }
+    );
+  }
+}
