@@ -2,12 +2,27 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // POST /api/club/players - Create a new player with parent account
 export async function POST(request: Request) {
   try {
+    // Validate environment variables
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing environment variables:", {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey,
+      });
+      return NextResponse.json(
+        {
+          error: "Server configuration error",
+          details: "Missing required environment variables",
+        },
+        { status: 500 }
+      );
+    }
+
     const supabase = await createClient();
 
     // Check authentication
@@ -222,8 +237,21 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error creating player:", error);
+
+    // Return detailed error info for debugging
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: errorDetails,
+    });
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: errorMessage, // Include error details in response
+      },
       { status: 500 }
     );
   }
