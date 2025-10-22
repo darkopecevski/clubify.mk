@@ -124,9 +124,10 @@ export async function POST(request: Request) {
             .single();
 
           if (!userProfile) {
-            // Create parent profile in users table
+            // Create parent profile in users table using admin client (bypasses RLS)
             console.log("Creating parent profile for user:", parentUserId);
-            const { error: profileError } = await supabase.from("users").insert({
+            const adminSupabase = createAdminClient();
+            const { error: profileError } = await adminSupabase.from("users").insert({
               id: parentUserId,
               full_name: parent_full_name,
             });
@@ -153,9 +154,10 @@ export async function POST(request: Request) {
           }
 
           if (!existingRole) {
-            // Assign parent role for this club
+            // Assign parent role for this club using admin client (bypasses RLS)
             console.log("Assigning parent role for club:", club_id);
-            const { error: roleError } = await supabase
+            const adminSupabase = createAdminClient();
+            const { error: roleError } = await adminSupabase
               .from("user_roles")
               .insert({
                 user_id: parentUserId,
@@ -176,22 +178,29 @@ export async function POST(request: Request) {
         // Successfully created new parent account
         parentUserId = authData.user.id;
 
-        // Create parent profile in users table
-        const { error: profileError } = await supabase.from("users").insert({
+        // Create parent profile in users table using admin client (bypasses RLS)
+        const adminSupabase = createAdminClient();
+        const { error: profileError } = await adminSupabase.from("users").insert({
           id: parentUserId,
           full_name: parent_full_name,
         });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile creation error (new parent):", profileError);
+          throw new Error(`Failed to create parent profile: ${profileError.message}`);
+        }
 
-        // Assign parent role
-        const { error: roleError } = await supabase.from("user_roles").insert({
+        // Assign parent role using admin client (bypasses RLS)
+        const { error: roleError } = await adminSupabase.from("user_roles").insert({
           user_id: parentUserId,
           club_id: club_id,
           role: "parent",
         });
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error("Role assignment error (new parent):", roleError);
+          throw new Error(`Failed to assign parent role: ${roleError.message}`);
+        }
       }
       } catch (parentError) {
         console.error("Error in parent account creation/lookup:", parentError);
@@ -235,8 +244,11 @@ export async function POST(request: Request) {
 
     const playerUserId = playerAuthData.user.id;
 
+    // Use admin client for all inserts (bypasses RLS)
+    const adminSupabase = createAdminClient();
+
     // Create player profile in users table
-    const { error: playerProfileError } = await supabase.from("users").insert({
+    const { error: playerProfileError } = await adminSupabase.from("users").insert({
       id: playerUserId,
       full_name: `${first_name} ${last_name}`,
     });
@@ -244,7 +256,7 @@ export async function POST(request: Request) {
     if (playerProfileError) throw playerProfileError;
 
     // Assign player role
-    const { error: playerRoleError } = await supabase
+    const { error: playerRoleError } = await adminSupabase
       .from("user_roles")
       .insert({
         user_id: playerUserId,
@@ -259,7 +271,7 @@ export async function POST(request: Request) {
     const normalizedDominantFoot = dominant_foot?.toLowerCase();
 
     // Create player record
-    const { data: playerData, error: playerError } = await supabase
+    const { data: playerData, error: playerError } = await adminSupabase
       .from("players")
       .insert({
         id: playerUserId, // Use auth user ID as player ID
@@ -289,8 +301,8 @@ export async function POST(request: Request) {
     // Normalize relationship to match database constraints (lowercase)
     const normalizedRelationship = parent_relationship?.toLowerCase();
 
-    // Create parent-player relationship
-    const { error: relationshipError } = await supabase
+    // Create parent-player relationship using admin client (bypasses RLS)
+    const { error: relationshipError } = await adminSupabase
       .from("player_parents")
       .insert({
         player_id: playerUserId,
