@@ -165,6 +165,10 @@ export async function POST(request: Request) {
 
     if (playerRoleError) throw playerRoleError;
 
+    // Normalize values to match database constraints (lowercase)
+    const normalizedGender = gender?.toLowerCase();
+    const normalizedDominantFoot = dominant_foot?.toLowerCase();
+
     // Create player record
     const { data: playerData, error: playerError } = await supabase
       .from("players")
@@ -174,10 +178,10 @@ export async function POST(request: Request) {
         first_name,
         last_name,
         date_of_birth,
-        gender,
+        gender: normalizedGender,
         photo_url: photo_url || null,
         position: position || null,
-        dominant_foot: dominant_foot || null,
+        dominant_foot: normalizedDominantFoot || null,
         jersey_number: jersey_number || null,
         notes: notes || null,
         blood_type: blood_type || null,
@@ -193,13 +197,16 @@ export async function POST(request: Request) {
 
     if (playerError) throw playerError;
 
+    // Normalize relationship to match database constraints (lowercase)
+    const normalizedRelationship = parent_relationship?.toLowerCase();
+
     // Create parent-player relationship
     const { error: relationshipError } = await supabase
       .from("player_parents")
       .insert({
         player_id: playerUserId,
         parent_user_id: parentUserId,
-        relationship: parent_relationship,
+        relationship: normalizedRelationship,
       });
 
     if (relationshipError) throw relationshipError;
