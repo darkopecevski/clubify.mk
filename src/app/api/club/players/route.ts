@@ -75,67 +75,76 @@ export async function POST(request: Request) {
 
     // Create or find parent account
     if (create_parent_account) {
-      // Check if parent email already exists
-      const { data: existingParent } = await adminClient.auth.admin.listUsers();
-      const parentExists = existingParent.users.find(
-        (u) => u.email === parent_email
-      );
+      // Try to create new parent account
+      parentPassword = "Player2025!";
+      const { data: authData, error: authError } =
+        await adminClient.auth.admin.createUser({
+          email: parent_email,
+          password: parentPassword,
+          email_confirm: true,
+          user_metadata: { full_name: parent_full_name },
+        });
 
-      if (parentExists) {
-        // Parent already has an account
-        parentUserId = parentExists.id;
+      if (authError) {
+        // Check if error is because user already exists
+        if (authError.message?.includes("already been registered")) {
+          // Parent already has an account - find them by email
+          const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+          const parentExists = existingUsers.users.find(
+            (u) => u.email === parent_email
+          );
 
-        // Check if parent has a profile in users table
-        const { data: userProfile } = await supabase
-          .from("users")
-          .select("id")
-          .eq("id", parentUserId)
-          .single();
+          if (!parentExists) {
+            throw new Error("Parent account exists but could not be found");
+          }
 
-        if (!userProfile) {
-          // Create parent profile in users table
-          const { error: profileError } = await supabase.from("users").insert({
-            id: parentUserId,
-            full_name: parent_full_name,
-          });
+          parentUserId = parentExists.id;
+          parentPassword = undefined; // Don't return password for existing account
 
-          if (profileError) throw profileError;
-        }
+          // Check if parent has a profile in users table
+          const { data: userProfile } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", parentUserId)
+            .single();
 
-        // Check if parent has role for this club
-        const { data: existingRole } = await supabase
-          .from("user_roles")
-          .select("id")
-          .eq("user_id", parentUserId)
-          .eq("club_id", club_id)
-          .eq("role", "parent")
-          .single();
-
-        if (!existingRole) {
-          // Assign parent role for this club
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert({
-              user_id: parentUserId,
-              club_id: club_id,
-              role: "parent",
+          if (!userProfile) {
+            // Create parent profile in users table
+            const { error: profileError } = await supabase.from("users").insert({
+              id: parentUserId,
+              full_name: parent_full_name,
             });
 
-          if (roleError) throw roleError;
+            if (profileError) throw profileError;
+          }
+
+          // Check if parent has role for this club
+          const { data: existingRole } = await supabase
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", parentUserId)
+            .eq("club_id", club_id)
+            .eq("role", "parent")
+            .single();
+
+          if (!existingRole) {
+            // Assign parent role for this club
+            const { error: roleError } = await supabase
+              .from("user_roles")
+              .insert({
+                user_id: parentUserId,
+                club_id: club_id,
+                role: "parent",
+              });
+
+            if (roleError) throw roleError;
+          }
+        } else {
+          // Some other auth error
+          throw authError;
         }
       } else {
-        // Create new parent account
-        parentPassword = "Player2025!";
-        const { data: authData, error: authError } =
-          await adminClient.auth.admin.createUser({
-            email: parent_email,
-            password: parentPassword,
-            email_confirm: true,
-            user_metadata: { full_name: parent_full_name },
-          });
-
-        if (authError) throw authError;
-
+        // Successfully created new parent account
         parentUserId = authData.user.id;
 
         // Create parent profile in users table
