@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useUserRole } from "@/hooks/use-user-role";
 
 type Player = {
@@ -42,6 +41,27 @@ type TeamAssignment = {
   is_active: boolean;
 };
 
+type ParentData = {
+  id: string;
+  relationship: string;
+  parent_user_id: string;
+  users: {
+    id: string;
+    full_name: string;
+  } | null;
+};
+
+type TeamData = {
+  id: string;
+  team_id: string;
+  joined_at: string;
+  is_active: boolean;
+  teams: {
+    id: string;
+    name: string;
+  } | null;
+};
+
 export default function PlayerProfilePage({
   clubId,
   playerId,
@@ -49,7 +69,6 @@ export default function PlayerProfilePage({
   clubId: string;
   playerId: string;
 }) {
-  const router = useRouter();
   const { isSuperAdmin, isClubAdmin } = useUserRole();
   const [player, setPlayer] = useState<Player | null>(null);
   const [parents, setParents] = useState<Parent[]>([]);
@@ -58,11 +77,7 @@ export default function PlayerProfilePage({
 
   const canEdit = isSuperAdmin() || isClubAdmin(clubId);
 
-  useEffect(() => {
-    fetchPlayerData();
-  }, [playerId]);
-
-  async function fetchPlayerData() {
+  const fetchPlayerData = useCallback(async () => {
     const supabase = createClient();
 
     // Fetch player data
@@ -95,7 +110,7 @@ export default function PlayerProfilePage({
       .eq("player_id", playerId);
 
     if (parentsData) {
-      const formattedParents = parentsData.map((p: any) => ({
+      const formattedParents = parentsData.map((p: ParentData) => ({
         id: p.parent_user_id,
         full_name: p.users?.full_name || "Unknown",
         relationship: p.relationship,
@@ -119,7 +134,7 @@ export default function PlayerProfilePage({
       .eq("player_id", playerId);
 
     if (teamsData) {
-      const formattedTeams = teamsData.map((t: any) => ({
+      const formattedTeams = teamsData.map((t: TeamData) => ({
         id: t.id,
         team_id: t.team_id,
         team_name: t.teams?.name || "Unknown Team",
@@ -130,7 +145,11 @@ export default function PlayerProfilePage({
     }
 
     setLoading(false);
-  }
+  }, [playerId]);
+
+  useEffect(() => {
+    fetchPlayerData();
+  }, [fetchPlayerData]);
 
   if (loading) {
     return (
