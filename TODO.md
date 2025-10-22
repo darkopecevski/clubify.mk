@@ -313,7 +313,9 @@
 
 **Deliverable:** ✅ Team management for club admins complete
 
-### 4.3 Player Management - Manual Creation ✅
+### 4.3 Player Management - CRUD Operations
+
+#### 4.3.1 Create Player ✅ **FULLY TESTED & WORKING**
 - [x] Create players list page with table
 - [x] Create "Add Player" multi-step form
   - [x] Step 1: Personal info
@@ -322,47 +324,97 @@
   - [x] Step 4: Emergency contact
   - [x] Step 5: Parent/guardian info
 - [x] Auto-create parent user account
-- [ ] Send welcome email to parent (deferred to Phase 9 - Notifications)
-- [x] Create player user account
-- [x] Test: Create player, verify accounts created
+- [x] Handle existing parent accounts robustly
+  - [x] Check if parent has role for this club, assign if missing
+  - [x] Reuse existing parent accounts when email matches
+  - [x] Ensure parent-player relationship is created
+- [x] Create player user account with unique email
+- [x] Idempotent operations (retry-safe)
+- [x] Test: Create player, verify accounts created ✅
+- [x] Test: Create multiple players with same parent ✅
+- [x] Test: Retry after partial failure ✅
 
-**Enhancements to Add:**
-- [ ] Handle existing parent accounts more robustly
-  - [ ] Check if parent has role for this club, assign if missing
-  - [ ] Return appropriate message when parent account already exists
-  - [ ] Ensure parent-player relationship is created
-  - [ ] Send notification email to existing parent about new child
-- [ ] Add player profile view/edit page
+**API Fixes Applied (2025-10-22):**
+- [x] Fixed case mismatch for database constraints (gender, dominant_foot, relationship)
+- [x] Fixed admin client import and usage
+- [x] Fixed pagination issues with listUsers() - now uses RPC function
+- [x] Fixed RLS policy violations - all inserts use admin client
+- [x] Fixed duplicate key errors - check before insert for retries
+- [x] Made all operations idempotent and retry-safe
+
+#### 4.3.2 View Player Profile 📝 **NEXT PRIORITY**
+- [ ] Create player profile view page (`/club/[clubId]/players/[playerId]`)
+- [ ] Display all player information (personal, football, medical, emergency)
+- [ ] Show parent information and relationship
+- [ ] Show team assignments (if any)
+- [ ] Show player statistics (to be populated later)
+- [ ] Access control: club_admins, coaches, parents (own children), players (own profile)
+- [ ] Test: View player as different roles
+
+#### 4.3.3 Edit Player 📝 **HIGH PRIORITY**
+- [ ] Create edit player page (`/club/[clubId]/players/[playerId]/edit`)
+- [ ] Reuse multi-step form from creation (pre-populate with existing data)
+- [ ] Allow editing all player fields except generated ones (email, user_id)
+- [ ] Allow updating parent information
+- [ ] Handle parent email changes (link to different existing parent if needed)
+- [ ] Update player profile on save
+- [ ] Access control: club_admins and super_admins only
+- [ ] Test: Edit player, verify all fields updated
+
+#### 4.3.4 Delete Player 📝 **MEDIUM PRIORITY**
+- [ ] Add delete button on player list (club_admins only)
+- [ ] Add delete confirmation modal
+- [ ] Create DELETE API endpoint (`/api/club/players/[playerId]`)
+- [ ] Soft delete vs hard delete decision:
+  - [ ] Option A: Soft delete (set is_active = false)
+  - [ ] Option B: Hard delete (CASCADE will remove relationships)
+- [ ] Handle auth account cleanup (optional - may want to keep for audit)
+- [ ] Access control: club_admins and super_admins only
+- [ ] Test: Delete player, verify cascading behavior
+
+**Future Enhancements (Post-CRUD):**
 - [ ] Add ability to link existing users as parents (without creating new account)
+- [ ] Send welcome email to parent (deferred to Phase 9 - Notifications)
+- [ ] Send notification email to existing parent about new child
 
-**Major Refactor Needed - URL-Based Club Routing:**
-- [ ] Refactor from context-based to URL-based club selection
-  - **Current Problem:** ClubProvider context causes infinite loops, localStorage hacks, complex state management
-  - **Solution:** Use `/club/[clubId]/*` pattern instead of `/club/*`
+**Major Refactor - URL-Based Club Routing:** ✅ COMPLETE
+- [x] Refactor from context-based to URL-based club selection
+  - **Problem Solved:** Eliminated infinite loops, localStorage hacks, complex state management
+  - **Solution:** Now using `/club/[clubId]/*` pattern
   - **Benefits:** Bookmarkable URLs, simpler code, no context needed, better UX
-- [ ] Phase 1: Create new route structure
-  - [ ] Create `/club/[clubId]` directory
-  - [ ] Move all club routes to new structure (dashboard, teams, players, etc.)
-  - [ ] Update layout to read clubId from params, validate access
-- [ ] Phase 2: Update pages
-  - [ ] Update all pages to use clubId from params instead of context
-  - [ ] Remove useClubContext() calls
-  - [ ] Update all navigation links to include clubId
-- [ ] Phase 3: Update admin integration
-  - [ ] Make club table rows clickable → navigate to `/club/[clubId]`
-  - [ ] Update admin layout "Switch to Club View" → navigate to `/club/[clubId]`
-  - [ ] Keep "Edit" button for editing club details
-- [ ] Phase 4: Update auth redirects
-  - [ ] Update ProtectedRoute to redirect club_admins to `/club/[first-club-id]`
-  - [ ] Update super admin redirects
-  - [ ] Remove localStorage usage
-- [ ] Phase 5: Cleanup
-  - [ ] Delete ClubProvider and useClubContext hook
-  - [ ] Delete old `/club/*` routes
-  - [ ] Update all internal links
-  - [ ] Test all navigation flows thoroughly
+- [x] Phase 1: Create new route structure
+  - [x] Create `/club/[clubId]` directory
+  - [x] Move all club routes to new structure (dashboard, teams, players, etc.)
+  - [x] Update layout to read clubId from params, validate access
+- [x] Phase 2: Update pages
+  - [x] Update all pages to use clubId from params instead of context
+  - [x] Remove useClubContext() calls
+  - [x] Update all navigation links to include clubId
+- [x] Phase 3: Update admin integration
+  - [x] Make club table rows clickable → navigate to `/club/[clubId]`
+  - [x] Update admin layout "Switch to Club View" → navigate to `/club/[clubId]`
+  - [x] Keep "Edit" button for editing club details
+- [x] Phase 4: Update auth redirects
+  - [x] Update getRoleDashboardUrl to redirect club_admins to `/club/[first-club-id]`
+  - [x] Update super admin redirects
+  - [x] Remove localStorage usage
+- [x] Phase 5: Cleanup
+  - [x] Delete ClubProvider and useClubContext hook
+  - [x] Delete old `/club/*` routes
+  - [x] Update all internal links
+  - [x] Test all navigation flows thoroughly
 
-**Deliverable:** ✅ Manual player creation complete (enhancements and refactor pending)
+**Fixes Applied:**
+- [x] Fixed isSuperAdmin function vs boolean confusion
+- [x] Fixed race condition in access validation (wait for rolesLoading)
+- [x] Fixed infinite loop by removing function dependencies from useEffect
+- [x] Fixed server component error in admin clubs page (split into server + client components)
+
+**Deliverable (Phase 4.3):**
+- ✅ 4.3.1 - Player Creation (COMPLETE & production-ready)
+- 📝 4.3.2 - Player Profile View (NEXT)
+- 📝 4.3.3 - Player Edit (HIGH PRIORITY)
+- 📝 4.3.4 - Player Delete (MEDIUM PRIORITY)
 
 ### 4.4 Player Management - CSV Import 📝
 - [ ] Create CSV template download
@@ -943,25 +995,40 @@
 
 ## Current Focus
 
-**Now:** Phase 4 - Club Admin Portal 📝
+**Now:** Phase 4.3 - Player Management CRUD (View/Edit/Delete) 📝
 
-**Next:** Phase 4.3 - Player Management
+**Next Steps (in priority order):**
+1. **4.3.2 - Player Profile View** (NEXT - Foundation for edit/delete)
+2. **4.3.3 - Player Edit** (HIGH - Complete CRUD operations)
+3. **4.3.4 - Player Delete** (MEDIUM - Complete CRUD operations)
+4. Then: 4.4 CSV Import OR 4.5 Team Assignment
 
 **Completed Recently:**
+- ✅ **Phase 4.3.1 - Player Creation** (FULLY TESTED & WORKING!) 🎉
+  - Multi-step player creation form
+  - Parent account management (create/reuse)
+  - Idempotent API operations
+  - Production-ready with retry handling
 - ✅ Phase 4.2 - Team Management (CRUD operations)
 - ✅ Phase 4.1 - Club Admin Dashboard (with super admin integration)
 - ✅ Phase 3 - Complete Super Admin Portal (UI redesign + theme switcher)
 - ✅ Phase 2 - Complete Auth & RBAC system with hooks
 - ✅ Phase 1 - Database Foundation (22 tables)
 
-**Phase 4.2 Complete:**
-- ✅ Teams list page with stats cards
-- ✅ Create team form with validation
-- ✅ Edit team form with delete protection
-- ✅ Active/inactive toggle
-- ✅ Player and coach counts per team
-- ✅ RLS enforcement (club-scoped)
-- ✅ All features tested and deployed
+**Phase 4.3.1 Complete - Key Achievements:**
+- ✅ 5-step player creation form (personal, football, medical, emergency, parent)
+- ✅ Automatic parent account creation with email uniqueness
+- ✅ Smart parent reuse (same parent for multiple children)
+- ✅ Role-based access with proper RLS bypass
+- ✅ Retry-safe operations (idempotent inserts)
+- ✅ Comprehensive error handling and logging
+- ✅ Production tested with real data
+
+**Why Complete CRUD First:**
+- Player View/Edit/Delete are essential for any production app
+- Users expect full CRUD before advanced features like CSV import
+- Team assignment requires viewing player profiles
+- Following REST/CRUD best practices
 
 ---
 
@@ -975,6 +1042,6 @@
 
 ---
 
-**Last Review:** 2025-10-21
-**Progress:** Phase 4.2 Complete! (Team Management)
-**Next Milestone:** Phase 4.3 - Player Management
+**Last Review:** 2025-10-22
+**Progress:** Phase 4.3.1 Complete! (Player Creation) 🎉
+**Next Milestone:** Phase 4.3.2 - Player Profile View → Phase 4.3.3 - Edit → Phase 4.3.4 - Delete

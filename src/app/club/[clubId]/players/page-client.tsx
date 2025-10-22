@@ -235,17 +235,20 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
                     className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      <Link
+                        href={`/club/${clubId}/players/${player.id}`}
+                        className="flex items-center gap-3 hover:opacity-80"
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700 dark:bg-green-900/20 dark:text-green-400">
                           {player.first_name.charAt(0)}
                           {player.last_name.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
+                          <div className="font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300">
                             {player.first_name} {player.last_name}
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {calculateAge(player.date_of_birth)}
