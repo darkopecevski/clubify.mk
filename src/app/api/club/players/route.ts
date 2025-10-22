@@ -162,26 +162,51 @@ export async function POST(request: Request) {
 
         // Create parent profile in users table using admin client (bypasses RLS)
         const adminSupabase = createAdminClient();
-        const { error: profileError } = await adminSupabase.from("users").insert({
-          id: parentUserId,
-          full_name: parent_full_name,
-        });
 
-        if (profileError) {
-          console.error("Profile creation error (new parent):", profileError);
-          throw new Error(`Failed to create parent profile: ${profileError.message}`);
+        // Check if profile already exists (in case of retry after partial failure)
+        const { data: existingParentProfile } = await adminSupabase
+          .from("users")
+          .select("id")
+          .eq("id", parentUserId)
+          .single();
+
+        if (!existingParentProfile) {
+          const { error: profileError } = await adminSupabase.from("users").insert({
+            id: parentUserId,
+            full_name: parent_full_name,
+          });
+
+          if (profileError) {
+            console.error("Profile creation error (new parent):", profileError);
+            throw new Error(`Failed to create parent profile: ${profileError.message}`);
+          }
+        } else {
+          console.log("Parent profile already exists, skipping creation");
         }
 
-        // Assign parent role using admin client (bypasses RLS)
-        const { error: roleError } = await adminSupabase.from("user_roles").insert({
-          user_id: parentUserId,
-          club_id: club_id,
-          role: "parent",
-        });
+        // Check if role already exists
+        const { data: existingParentRole } = await adminSupabase
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", parentUserId)
+          .eq("club_id", club_id)
+          .eq("role", "parent")
+          .single();
 
-        if (roleError) {
-          console.error("Role assignment error (new parent):", roleError);
-          throw new Error(`Failed to assign parent role: ${roleError.message}`);
+        if (!existingParentRole) {
+          // Assign parent role using admin client (bypasses RLS)
+          const { error: roleError } = await adminSupabase.from("user_roles").insert({
+            user_id: parentUserId,
+            club_id: club_id,
+            role: "parent",
+          });
+
+          if (roleError) {
+            console.error("Role assignment error (new parent):", roleError);
+            throw new Error(`Failed to assign parent role: ${roleError.message}`);
+          }
+        } else {
+          console.log("Parent role already exists, skipping assignment");
         }
       }
       } catch (parentError) {
