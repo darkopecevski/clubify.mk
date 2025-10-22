@@ -88,17 +88,37 @@ export async function POST(request: Request) {
       if (authError) {
         // Check if error is because user already exists
         if (authError.message?.includes("already been registered")) {
-          // Parent already has an account - find them by email
-          const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-          const parentExists = existingUsers.users.find(
-            (u) => u.email === parent_email
-          );
+          // Parent already has an account - paginate through all users to find them
+          let foundUser = null;
+          let page = 1;
+          const perPage = 1000;
 
-          if (!parentExists) {
-            throw new Error("Parent account exists but could not be found");
+          while (!foundUser) {
+            const { data: usersPage, error: listError } =
+              await adminClient.auth.admin.listUsers({
+                page,
+                perPage,
+              });
+
+            if (listError) throw listError;
+
+            foundUser = usersPage.users.find((u) => u.email === parent_email);
+
+            // If we've fetched all users and still haven't found them, break
+            if (usersPage.users.length < perPage) {
+              break;
+            }
+
+            page++;
           }
 
-          parentUserId = parentExists.id;
+          if (!foundUser) {
+            throw new Error(
+              `Parent account with email ${parent_email} exists in auth but could not be found after searching all users.`
+            );
+          }
+
+          parentUserId = foundUser.id;
           parentPassword = undefined; // Don't return password for existing account
 
           // Check if parent has a profile in users table
