@@ -570,13 +570,17 @@ export default function CreatePlayerPageClient({ clubId }: { clubId: string }) {
                   >
                     Relationship *
                   </label>
-                  <input
+                  <select
                     {...register("emergency_contact_relationship")}
-                    type="text"
                     id="emergency_contact_relationship"
-                    placeholder="e.g., Mother, Father, Guardian"
-                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
-                  />
+                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                  >
+                    <option value="">Select relationship</option>
+                    <option value="mother">Mother</option>
+                    <option value="father">Father</option>
+                    <option value="guardian">Guardian</option>
+                    <option value="other">Other</option>
+                  </select>
                   {errors.emergency_contact_relationship && (
                     <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
                       {errors.emergency_contact_relationship.message}

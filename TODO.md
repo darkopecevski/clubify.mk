@@ -376,6 +376,7 @@
 - [ ] Add ability to link existing users as parents (without creating new account)
 - [ ] Send welcome email to parent (deferred to Phase 9 - Notifications)
 - [ ] Send notification email to existing parent about new child
+- [ ] **Password Reset by Admins:** Club admins should be able to reset passwords for players and parents in their club. Super admins should be able to reset passwords for all users.
 
 **Major Refactor - URL-Based Club Routing:** ✅ COMPLETE
 - [x] Refactor from context-based to URL-based club selection
