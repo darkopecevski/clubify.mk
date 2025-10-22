@@ -98,7 +98,7 @@ function ClubLayoutInner({
         setCurrentClub(clubData);
 
         // Check if user has access (super admin or has club_admin role for this club)
-        const userHasAccess = isSuperAdmin() || clubIds.includes(clubId);
+        const userHasAccess = isSuperAdmin || clubIds.includes(clubId);
 
         if (!userHasAccess) {
           router.push("/unauthorized");
@@ -114,7 +114,7 @@ function ClubLayoutInner({
           .eq("is_active", true)
           .order("name");
 
-        if (!isSuperAdmin()) {
+        if (!isSuperAdmin) {
           query = query.in("id", clubIds);
         }
 
