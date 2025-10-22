@@ -140,7 +140,7 @@ function ClubLayoutInner({
 
     validateAccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, clubId, rolesLoading, clubIds, isSuperAdmin]);
+  }, [user, clubId, rolesLoading]);
 
   const handleSignOut = async () => {
     await signOut();
