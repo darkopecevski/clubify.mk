@@ -303,15 +303,15 @@
 
 **Deliverable:** ✅ Club admin dashboard complete with full super admin integration
 
-### 4.2 Team Management 📝
-- [ ] Create teams list page
-- [ ] Create "Create Team" form (name, age group, season)
-- [ ] Create "Edit Team" form
-- [ ] Add team activation/deactivation
-- [ ] Set subscription fee per team
-- [ ] Test: CRUD operations on teams, RLS enforcement
+### 4.2 Team Management ✅
+- [x] Create teams list page
+- [x] Create "Create Team" form (name, age group, season)
+- [x] Create "Edit Team" form
+- [x] Add team activation/deactivation
+- [ ] Set subscription fee per team (deferred to Phase 8 - Payment Management)
+- [x] Test: CRUD operations on teams, RLS enforcement
 
-**Deliverable:** Team management for club admins
+**Deliverable:** ✅ Team management for club admins complete
 
 ### 4.3 Player Management - Manual Creation 📝
 - [ ] Create players list page with table
@@ -909,21 +909,22 @@
 
 **Now:** Phase 4 - Club Admin Portal 📝
 
-**Next:** Phase 4.2 - Team Management
+**Next:** Phase 4.3 - Player Management
 
 **Completed Recently:**
+- ✅ Phase 4.2 - Team Management (CRUD operations)
 - ✅ Phase 4.1 - Club Admin Dashboard (with super admin integration)
 - ✅ Phase 3 - Complete Super Admin Portal (UI redesign + theme switcher)
 - ✅ Phase 2 - Complete Auth & RBAC system with hooks
 - ✅ Phase 1 - Database Foundation (22 tables)
 
-**Phase 4.1 Complete:**
-- ✅ Club admin dashboard with stats and widgets
-- ✅ Club context hook for multi-club management
-- ✅ Super admin can switch to any club view
-- ✅ "Back to Admin" button for super admins
-- ✅ Role-based auto-redirects
-- ✅ Unified layouts and forms
+**Phase 4.2 Complete:**
+- ✅ Teams list page with stats cards
+- ✅ Create team form with validation
+- ✅ Edit team form with delete protection
+- ✅ Active/inactive toggle
+- ✅ Player and coach counts per team
+- ✅ RLS enforcement (club-scoped)
 - ✅ All features tested and deployed
 
 ---
@@ -939,5 +940,5 @@
 ---
 
 **Last Review:** 2025-10-21
-**Progress:** Phase 4.1 Complete! (Club Admin Dashboard with Super Admin Integration)
-**Next Milestone:** Phase 4.2 - Team Management
+**Progress:** Phase 4.2 Complete! (Team Management)
+**Next Milestone:** Phase 4.3 - Player Management
