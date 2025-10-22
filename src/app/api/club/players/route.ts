@@ -125,16 +125,20 @@ export async function POST(request: Request) {
 
           if (!userProfile) {
             // Create parent profile in users table
+            console.log("Creating parent profile for user:", parentUserId);
             const { error: profileError } = await supabase.from("users").insert({
               id: parentUserId,
               full_name: parent_full_name,
             });
 
-            if (profileError) throw profileError;
+            if (profileError) {
+              console.error("Profile creation error:", profileError);
+              throw new Error(`Failed to create parent profile: ${profileError.message}`);
+            }
           }
 
           // Check if parent has role for this club
-          const { data: existingRole } = await supabase
+          const { data: existingRole, error: roleCheckError } = await supabase
             .from("user_roles")
             .select("id")
             .eq("user_id", parentUserId)
@@ -142,8 +146,15 @@ export async function POST(request: Request) {
             .eq("role", "parent")
             .single();
 
+          if (roleCheckError && roleCheckError.code !== "PGRST116") {
+            // PGRST116 is "not found" which is fine
+            console.error("Role check error:", roleCheckError);
+            throw new Error(`Failed to check parent role: ${roleCheckError.message}`);
+          }
+
           if (!existingRole) {
             // Assign parent role for this club
+            console.log("Assigning parent role for club:", club_id);
             const { error: roleError } = await supabase
               .from("user_roles")
               .insert({
@@ -152,7 +163,10 @@ export async function POST(request: Request) {
                 role: "parent",
               });
 
-            if (roleError) throw roleError;
+            if (roleError) {
+              console.error("Role assignment error:", roleError);
+              throw new Error(`Failed to assign parent role: ${roleError.message}`);
+            }
           }
         } else {
           // Some other auth error
@@ -181,11 +195,18 @@ export async function POST(request: Request) {
       }
       } catch (parentError) {
         console.error("Error in parent account creation/lookup:", parentError);
-        throw new Error(
-          `Failed to create or find parent account: ${
-            parentError instanceof Error ? parentError.message : String(parentError)
-          }`
-        );
+
+        let errorMsg = "Unknown error";
+        if (parentError instanceof Error) {
+          errorMsg = parentError.message;
+        } else if (typeof parentError === "object" && parentError !== null) {
+          const err = parentError as { message?: string; error_description?: string; code?: string };
+          errorMsg = err.message || err.error_description || err.code || JSON.stringify(parentError);
+        } else {
+          errorMsg = String(parentError);
+        }
+
+        throw new Error(`Failed to create or find parent account: ${errorMsg}`);
       }
     } else {
       // If not creating parent account, we still need a parent user ID
