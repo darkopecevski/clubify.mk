@@ -229,15 +229,26 @@ export async function POST(request: Request) {
     // Use admin client for all inserts (bypasses RLS)
     const adminSupabase = createAdminClient();
 
-    // Create player profile in users table
-    const { error: playerProfileError } = await adminSupabase.from("users").insert({
-      id: playerUserId,
-      full_name: `${first_name} ${last_name}`,
-    });
+    // Check if player profile already exists (in case of retry after partial failure)
+    const { data: existingProfile } = await adminSupabase
+      .from("users")
+      .select("id")
+      .eq("id", playerUserId)
+      .single();
 
-    if (playerProfileError) {
-      console.error("Player profile creation error:", playerProfileError);
-      throw new Error(`Failed to create player profile: ${playerProfileError.message}`);
+    if (!existingProfile) {
+      // Create player profile in users table
+      const { error: playerProfileError } = await adminSupabase.from("users").insert({
+        id: playerUserId,
+        full_name: `${first_name} ${last_name}`,
+      });
+
+      if (playerProfileError) {
+        console.error("Player profile creation error:", playerProfileError);
+        throw new Error(`Failed to create player profile: ${playerProfileError.message}`);
+      }
+    } else {
+      console.log("Player profile already exists, skipping creation");
     }
 
     // Assign player role
