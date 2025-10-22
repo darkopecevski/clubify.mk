@@ -235,7 +235,10 @@ export async function POST(request: Request) {
       full_name: `${first_name} ${last_name}`,
     });
 
-    if (playerProfileError) throw playerProfileError;
+    if (playerProfileError) {
+      console.error("Player profile creation error:", playerProfileError);
+      throw new Error(`Failed to create player profile: ${playerProfileError.message}`);
+    }
 
     // Assign player role
     const { error: playerRoleError } = await adminSupabase
@@ -246,7 +249,10 @@ export async function POST(request: Request) {
         role: "player",
       });
 
-    if (playerRoleError) throw playerRoleError;
+    if (playerRoleError) {
+      console.error("Player role assignment error:", playerRoleError);
+      throw new Error(`Failed to assign player role: ${playerRoleError.message}`);
+    }
 
     // Normalize values to match database constraints (lowercase)
     const normalizedGender = gender?.toLowerCase();
@@ -278,7 +284,10 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (playerError) throw playerError;
+    if (playerError) {
+      console.error("Player record creation error:", playerError);
+      throw new Error(`Failed to create player record: ${playerError.message}`);
+    }
 
     // Normalize relationship to match database constraints (lowercase)
     const normalizedRelationship = parent_relationship?.toLowerCase();
@@ -292,7 +301,10 @@ export async function POST(request: Request) {
         relationship: normalizedRelationship,
       });
 
-    if (relationshipError) throw relationshipError;
+    if (relationshipError) {
+      console.error("Relationship creation error:", relationshipError);
+      throw new Error(`Failed to create parent-player relationship: ${relationshipError.message}`);
+    }
 
     // TODO: Send welcome email to parent
     // This would be implemented with Resend in a future phase
