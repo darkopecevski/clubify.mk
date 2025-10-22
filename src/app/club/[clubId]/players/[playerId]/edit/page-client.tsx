@@ -140,7 +140,7 @@ export default function EditPlayerPage({
       first_name: playerData.first_name,
       last_name: playerData.last_name,
       date_of_birth: playerData.date_of_birth,
-      gender: playerData.gender,
+      gender: playerData.gender || "",
       photo_url: playerData.photo_url || "",
       position: playerData.position || "",
       dominant_foot: playerData.dominant_foot || "",
@@ -151,7 +151,7 @@ export default function EditPlayerPage({
       medical_conditions: playerData.medical_conditions || "",
       emergency_contact_name: playerData.emergency_contact_name,
       emergency_contact_phone: playerData.emergency_contact_phone,
-      emergency_contact_relationship: playerData.emergency_contact_relationship,
+      emergency_contact_relationship: playerData.emergency_contact_relationship || "",
       parent_email: parentEmail,
       parent_full_name: parentData?.users?.full_name || "",
       parent_relationship: parentData?.relationship || "",
@@ -308,7 +308,22 @@ export default function EditPlayerPage({
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        onSubmit={(e) => {
+          // Only allow form submission on the last step
+          if (currentStep < steps.length) {
+            e.preventDefault();
+            return;
+          }
+          handleSubmit(onSubmit)(e);
+        }}
+        onKeyDown={(e) => {
+          // Prevent Enter key from submitting form on non-final steps
+          if (e.key === "Enter" && currentStep < steps.length) {
+            e.preventDefault();
+          }
+        }}
+      >
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           {/* Step 1: Personal Info */}
           {currentStep === 1 && (
@@ -375,8 +390,8 @@ export default function EditPlayerPage({
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
                   </select>
                   {errors.gender && (
                     <p className="mt-1 text-sm text-red-600">
@@ -438,9 +453,9 @@ export default function EditPlayerPage({
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select foot</option>
-                    <option value="Left">Left</option>
-                    <option value="Right">Right</option>
-                    <option value="Both">Both</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                    <option value="both">Both</option>
                   </select>
                 </div>
 
@@ -576,10 +591,10 @@ export default function EditPlayerPage({
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select relationship</option>
-                    <option value="Mother">Mother</option>
-                    <option value="Father">Father</option>
-                    <option value="Guardian">Guardian</option>
-                    <option value="Other">Other</option>
+                    <option value="mother">Mother</option>
+                    <option value="father">Father</option>
+                    <option value="guardian">Guardian</option>
+                    <option value="other">Other</option>
                   </select>
                   {errors.emergency_contact_relationship && (
                     <p className="mt-1 text-sm text-red-600">
@@ -644,10 +659,10 @@ export default function EditPlayerPage({
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select relationship</option>
-                    <option value="Mother">Mother</option>
-                    <option value="Father">Father</option>
-                    <option value="Guardian">Guardian</option>
-                    <option value="Other">Other</option>
+                    <option value="mother">Mother</option>
+                    <option value="father">Father</option>
+                    <option value="guardian">Guardian</option>
+                    <option value="other">Other</option>
                   </select>
                   {errors.parent_relationship && (
                     <p className="mt-1 text-sm text-red-600">
