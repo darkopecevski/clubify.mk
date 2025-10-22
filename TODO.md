@@ -342,35 +342,36 @@
 - [x] Fixed duplicate key errors - check before insert for retries
 - [x] Made all operations idempotent and retry-safe
 
-#### 4.3.2 View Player Profile 📝 **NEXT PRIORITY**
-- [ ] Create player profile view page (`/club/[clubId]/players/[playerId]`)
-- [ ] Display all player information (personal, football, medical, emergency)
-- [ ] Show parent information and relationship
-- [ ] Show team assignments (if any)
-- [ ] Show player statistics (to be populated later)
-- [ ] Access control: club_admins, coaches, parents (own children), players (own profile)
-- [ ] Test: View player as different roles
+#### 4.3.2 View Player Profile ✅ **COMPLETE**
+- [x] Create player profile view page (`/club/[clubId]/players/[playerId]`)
+- [x] Display all player information (personal, football, medical, emergency)
+- [x] Show parent information and relationship
+- [x] Show team assignments (if any)
+- [x] Show player statistics (to be populated later)
+- [x] Access control: club_admins, coaches, parents (own children), players (own profile)
+- [x] Test: View player as different roles
 
-#### 4.3.3 Edit Player 📝 **HIGH PRIORITY**
-- [ ] Create edit player page (`/club/[clubId]/players/[playerId]/edit`)
-- [ ] Reuse multi-step form from creation (pre-populate with existing data)
-- [ ] Allow editing all player fields except generated ones (email, user_id)
-- [ ] Allow updating parent information
-- [ ] Handle parent email changes (link to different existing parent if needed)
-- [ ] Update player profile on save
-- [ ] Access control: club_admins and super_admins only
-- [ ] Test: Edit player, verify all fields updated
+#### 4.3.3 Edit Player ✅ **COMPLETE**
+- [x] Create edit player page (`/club/[clubId]/players/[playerId]/edit`)
+- [x] Reuse multi-step form from creation (pre-populate with existing data)
+- [x] Allow editing all player fields except generated ones (email, user_id)
+- [x] Allow updating parent information
+- [x] Handle parent email changes (link to different existing parent if needed)
+- [x] Update player profile on save
+- [x] Access control: club_admins and super_admins only
+- [x] Test: Edit player, verify all fields updated
+- [x] Fixed select option values to match database (lowercase)
+- [x] Fixed form auto-submission issue
 
-#### 4.3.4 Delete Player 📝 **MEDIUM PRIORITY**
-- [ ] Add delete button on player list (club_admins only)
-- [ ] Add delete confirmation modal
-- [ ] Create DELETE API endpoint (`/api/club/players/[playerId]`)
-- [ ] Soft delete vs hard delete decision:
-  - [ ] Option A: Soft delete (set is_active = false)
-  - [ ] Option B: Hard delete (CASCADE will remove relationships)
-- [ ] Handle auth account cleanup (optional - may want to keep for audit)
-- [ ] Access control: club_admins and super_admins only
-- [ ] Test: Delete player, verify cascading behavior
+#### 4.3.4 Delete Player ✅ **COMPLETE**
+- [x] Add delete button on player profile page (club_admins only)
+- [x] Add delete confirmation modal
+- [x] Create DELETE API endpoint (`/api/club/players/[playerId]`)
+- [x] Soft delete vs hard delete decision:
+  - [x] Option A: Soft delete (set is_active = false) ✅ IMPLEMENTED
+- [x] Handle auth account cleanup (keeping accounts for audit trail)
+- [x] Access control: club_admins and super_admins only
+- [x] Test: Delete player, verify soft delete behavior
 
 **Future Enhancements (Post-CRUD):**
 - [ ] Add ability to link existing users as parents (without creating new account)
@@ -411,11 +412,11 @@
 - [x] Fixed infinite loop by removing function dependencies from useEffect
 - [x] Fixed server component error in admin clubs page (split into server + client components)
 
-**Deliverable (Phase 4.3):**
+**Deliverable (Phase 4.3):** ✅ **COMPLETE - Full Player CRUD Operations!**
 - ✅ 4.3.1 - Player Creation (COMPLETE & production-ready)
-- 📝 4.3.2 - Player Profile View (NEXT)
-- 📝 4.3.3 - Player Edit (HIGH PRIORITY)
-- 📝 4.3.4 - Player Delete (MEDIUM PRIORITY)
+- ✅ 4.3.2 - Player Profile View (COMPLETE)
+- ✅ 4.3.3 - Player Edit (COMPLETE)
+- ✅ 4.3.4 - Player Delete (Soft Delete COMPLETE)
 
 ### 4.4 Player Management - CSV Import 📝
 - [ ] Create CSV template download
@@ -996,20 +997,21 @@
 
 ## Current Focus
 
-**Now:** Phase 4.3 - Player Management CRUD (View/Edit/Delete) 📝
+**Now:** Phase 4.3 - Player Management CRUD ✅ **COMPLETE!**
 
 **Next Steps (in priority order):**
-1. **4.3.2 - Player Profile View** (NEXT - Foundation for edit/delete)
-2. **4.3.3 - Player Edit** (HIGH - Complete CRUD operations)
-3. **4.3.4 - Player Delete** (MEDIUM - Complete CRUD operations)
-4. Then: 4.4 CSV Import OR 4.5 Team Assignment
+1. **4.4 - CSV Player Import** (Bulk player creation)
+2. **4.5 - Player Team Assignment** (Assign players to teams)
+3. **4.6 - Coach Management** (Add/manage coaches)
 
 **Completed Recently:**
-- ✅ **Phase 4.3.1 - Player Creation** (FULLY TESTED & WORKING!) 🎉
-  - Multi-step player creation form
-  - Parent account management (create/reuse)
-  - Idempotent API operations
-  - Production-ready with retry handling
+- ✅ **Phase 4.3 - Player Management CRUD** (COMPLETE!) 🎉
+  - **4.3.1** - Multi-step player creation form with parent account management
+  - **4.3.2** - Player profile view with all information display
+  - **4.3.3** - Player edit with pre-population and validation
+  - **4.3.4** - Soft delete functionality with confirmation modal
+  - Fixed form value matching (lowercase DB values)
+  - Production-ready with full access control
 - ✅ Phase 4.2 - Team Management (CRUD operations)
 - ✅ Phase 4.1 - Club Admin Dashboard (with super admin integration)
 - ✅ Phase 3 - Complete Super Admin Portal (UI redesign + theme switcher)
