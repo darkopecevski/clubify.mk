@@ -92,7 +92,8 @@ export function ClubProvider({ children }: { children: ReactNode }) {
     }
 
     fetchClubs();
-  }, [clubIds, rolesLoading, selectedClubId, isSuperAdmin, roles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubIds, rolesLoading, isSuperAdmin, roles]);
 
   const handleSetSelectedClubId = (clubId: string) => {
     setSelectedClubId(clubId);

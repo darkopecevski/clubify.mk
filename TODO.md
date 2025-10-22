@@ -313,20 +313,29 @@
 
 **Deliverable:** ✅ Team management for club admins complete
 
-### 4.3 Player Management - Manual Creation 📝
-- [ ] Create players list page with table
-- [ ] Create "Add Player" multi-step form
-  - [ ] Step 1: Personal info
-  - [ ] Step 2: Football info
-  - [ ] Step 3: Medical info
-  - [ ] Step 4: Emergency contact
-  - [ ] Step 5: Parent/guardian info
-- [ ] Auto-create parent user account
-- [ ] Send welcome email to parent
-- [ ] Create player user account
-- [ ] Test: Create player, verify accounts created
+### 4.3 Player Management - Manual Creation ✅
+- [x] Create players list page with table
+- [x] Create "Add Player" multi-step form
+  - [x] Step 1: Personal info
+  - [x] Step 2: Football info
+  - [x] Step 3: Medical info
+  - [x] Step 4: Emergency contact
+  - [x] Step 5: Parent/guardian info
+- [x] Auto-create parent user account
+- [ ] Send welcome email to parent (deferred to Phase 9 - Notifications)
+- [x] Create player user account
+- [x] Test: Create player, verify accounts created
 
-**Deliverable:** Manual player creation
+**Enhancements to Add:**
+- [ ] Handle existing parent accounts more robustly
+  - [ ] Check if parent has role for this club, assign if missing
+  - [ ] Return appropriate message when parent account already exists
+  - [ ] Ensure parent-player relationship is created
+  - [ ] Send notification email to existing parent about new child
+- [ ] Add player profile view/edit page
+- [ ] Add ability to link existing users as parents (without creating new account)
+
+**Deliverable:** ✅ Manual player creation complete (enhancements pending)
 
 ### 4.4 Player Management - CSV Import 📝
 - [ ] Create CSV template download
