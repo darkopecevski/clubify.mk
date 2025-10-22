@@ -49,7 +49,7 @@ function ClubLayoutInner({
   const { signOut, loading: authLoading } = useAuth();
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
-  const { isSuperAdmin, clubIds } = useUserRole();
+  const { isSuperAdmin, clubIds, isLoading: rolesLoading } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -77,7 +77,10 @@ function ClubLayoutInner({
 
   useEffect(() => {
     async function validateAccess() {
-      if (!user) return;
+      // Wait for user and roles to load
+      if (!user || rolesLoading) {
+        return;
+      }
 
       const supabase = createClient();
 
@@ -99,6 +102,13 @@ function ClubLayoutInner({
 
         // Check if user has access (super admin or has club_admin role for this club)
         const userHasAccess = isSuperAdmin() || clubIds.includes(clubId);
+
+        console.log("Access check:", {
+          clubId,
+          isSuperAdmin: isSuperAdmin(),
+          clubIds,
+          userHasAccess,
+        });
 
         if (!userHasAccess) {
           router.push("/unauthorized");
@@ -130,7 +140,7 @@ function ClubLayoutInner({
 
     validateAccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, clubId]);
+  }, [user, clubId, rolesLoading, clubIds, isSuperAdmin]);
 
   const handleSignOut = async () => {
     await signOut();
