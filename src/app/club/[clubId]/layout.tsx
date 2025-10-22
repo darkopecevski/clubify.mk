@@ -98,7 +98,7 @@ function ClubLayoutInner({
         setCurrentClub(clubData);
 
         // Check if user has access (super admin or has club_admin role for this club)
-        const userHasAccess = isSuperAdmin || clubIds.includes(clubId);
+        const userHasAccess = isSuperAdmin() || clubIds.includes(clubId);
 
         if (!userHasAccess) {
           router.push("/unauthorized");
@@ -114,7 +114,7 @@ function ClubLayoutInner({
           .eq("is_active", true)
           .order("name");
 
-        if (!isSuperAdmin) {
+        if (!isSuperAdmin()) {
           query = query.in("id", clubIds);
         }
 
@@ -195,7 +195,7 @@ function ClubLayoutInner({
         {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
           {/* Back to Admin button for super admins */}
-          {isSuperAdmin && !sidebarCollapsed && (
+          {isSuperAdmin() && !sidebarCollapsed && (
             <Link
               href="/admin"
               className="mb-4 flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -235,7 +235,7 @@ function ClubLayoutInner({
               </div>
               <div className="flex-1 overflow-hidden">
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                  {isSuperAdmin ? "Super Admin" : "Club Admin"}
+                  {isSuperAdmin() ? "Super Admin" : "Club Admin"}
                 </p>
                 <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                   {user?.email}
@@ -389,7 +389,7 @@ function ClubLayoutInner({
                   <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                     <div className="p-3">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {isSuperAdmin ? "Super Admin" : "Club Admin"}
+                        {isSuperAdmin() ? "Super Admin" : "Club Admin"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {user?.email}
