@@ -84,6 +84,45 @@ export async function POST(request: Request) {
       if (parentExists) {
         // Parent already has an account
         parentUserId = parentExists.id;
+
+        // Check if parent has a profile in users table
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("id")
+          .eq("id", parentUserId)
+          .single();
+
+        if (!userProfile) {
+          // Create parent profile in users table
+          const { error: profileError } = await supabase.from("users").insert({
+            id: parentUserId,
+            full_name: parent_full_name,
+          });
+
+          if (profileError) throw profileError;
+        }
+
+        // Check if parent has role for this club
+        const { data: existingRole } = await supabase
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", parentUserId)
+          .eq("club_id", club_id)
+          .eq("role", "parent")
+          .single();
+
+        if (!existingRole) {
+          // Assign parent role for this club
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert({
+              user_id: parentUserId,
+              club_id: club_id,
+              role: "parent",
+            });
+
+          if (roleError) throw roleError;
+        }
       } else {
         // Create new parent account
         parentPassword = "Player2025!";
