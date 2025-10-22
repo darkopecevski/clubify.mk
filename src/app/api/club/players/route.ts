@@ -75,28 +75,33 @@ export async function POST(request: Request) {
 
     // Create or find parent account
     if (create_parent_account) {
-      // Try to create new parent account
-      parentPassword = "Player2025!";
-      const { data: authData, error: authError } =
-        await adminClient.auth.admin.createUser({
-          email: parent_email,
-          password: parentPassword,
-          email_confirm: true,
-          user_metadata: { full_name: parent_full_name },
-        });
+      try {
+        // Try to create new parent account
+        parentPassword = "Player2025!";
+        const { data: authData, error: authError } =
+          await adminClient.auth.admin.createUser({
+            email: parent_email,
+            password: parentPassword,
+            email_confirm: true,
+            user_metadata: { full_name: parent_full_name },
+          });
 
-      if (authError) {
-        // Check if error is because user already exists
-        if (authError.message?.includes("already been registered")) {
-          // Parent already has an account - use RPC function to find them by email
-          const { data: usersWithEmail, error: rpcError } = await supabase.rpc(
-            "get_users_with_email"
-          );
+        if (authError) {
+          // Check if error is because user already exists
+          if (authError.message?.includes("already been registered")) {
+            console.log("Parent exists, looking up by email:", parent_email);
 
-          if (rpcError) {
-            console.error("RPC error:", rpcError);
-            throw new Error(`Failed to query users: ${rpcError.message}`);
-          }
+            // Parent already has an account - use RPC function to find them by email
+            const { data: usersWithEmail, error: rpcError } = await supabase.rpc(
+              "get_users_with_email"
+            );
+
+            if (rpcError) {
+              console.error("RPC error:", rpcError);
+              throw new Error(`Failed to query users: ${rpcError.message}`);
+            }
+
+            console.log("Found users count:", usersWithEmail?.length || 0);
 
           const foundUser = usersWithEmail?.find(
             (u: { email: string }) => u.email === parent_email
@@ -173,6 +178,14 @@ export async function POST(request: Request) {
         });
 
         if (roleError) throw roleError;
+      }
+      } catch (parentError) {
+        console.error("Error in parent account creation/lookup:", parentError);
+        throw new Error(
+          `Failed to create or find parent account: ${
+            parentError instanceof Error ? parentError.message : String(parentError)
+          }`
+        );
       }
     } else {
       // If not creating parent account, we still need a parent user ID
@@ -278,21 +291,34 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating player:", error);
 
-    // Return detailed error info for debugging
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    const errorDetails = error instanceof Error ? error.stack : String(error);
+    // Handle different error types
+    let errorMessage = "Unknown error";
+    let errorDetails = "";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.stack || "";
+    } else if (typeof error === "object" && error !== null) {
+      // Supabase errors
+      const err = error as any;
+      errorMessage = err.message || err.error_description || JSON.stringify(error);
+      errorDetails = JSON.stringify(error, null, 2);
+    } else {
+      errorMessage = String(error);
+    }
 
     console.error("Error details:", {
       message: errorMessage,
-      stack: errorDetails,
-      error: JSON.stringify(error, null, 2),
+      details: errorDetails,
+      type: typeof error,
+      isError: error instanceof Error,
     });
 
     return NextResponse.json(
       {
         error: "Internal server error",
         details: errorMessage,
-        fullError: error instanceof Error ? error.toString() : String(error),
+        type: typeof error,
       },
       { status: 500 }
     );
