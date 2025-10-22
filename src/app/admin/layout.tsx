@@ -88,9 +88,8 @@ export default function AdminLayout({
   };
 
   const handleSwitchToClub = (clubId: string) => {
-    // Store the selected club and redirect to club dashboard
-    localStorage.setItem("superAdminSelectedClub", clubId);
-    router.push("/club");
+    // Redirect directly to the club dashboard
+    router.push(`/club/${clubId}`);
   };
 
   return (

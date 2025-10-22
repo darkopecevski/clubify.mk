@@ -33,7 +33,12 @@ export async function getRoleDashboardUrl(): Promise<string> {
     }
 
     if (hasRole("club_admin")) {
-      return "/club";
+      // Get the first club the user has access to
+      const clubAdminRole = roles.find(r => r.role === "club_admin");
+      if (clubAdminRole?.club_id) {
+        return `/club/${clubAdminRole.club_id}`;
+      }
+      return "/club"; // Fallback in case no club_id found
     }
 
     if (hasRole("coach")) {

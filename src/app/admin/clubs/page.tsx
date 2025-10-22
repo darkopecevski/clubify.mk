@@ -64,41 +64,50 @@ export default async function ClubsPage() {
           <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
             {clubs.length > 0 ? (
               clubs.map((club) => (
-                <tr key={club.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={club.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {club.name}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {club.slug}
-                    </div>
+                    <Link href={`/club/${club.id}`} className="block">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {club.name}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {club.slug}
+                      </div>
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {club.city}
+                    <Link href={`/club/${club.id}`} className="block">
+                      {club.city}
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {club.contact_email}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {club.contact_phone}
-                    </div>
+                    <Link href={`/club/${club.id}`} className="block">
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {club.contact_email}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {club.contact_phone}
+                      </div>
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        club.is_active
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-                      }`}
-                    >
-                      {club.is_active ? "Active" : "Inactive"}
-                    </span>
+                    <Link href={`/club/${club.id}`} className="block">
+                      <span
+                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                          club.is_active
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                        }`}
+                      >
+                        {club.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                     <Link
                       href={`/admin/clubs/${club.id}`}
                       className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Edit
                     </Link>

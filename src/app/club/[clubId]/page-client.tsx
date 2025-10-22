@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Users, UserSquare2, Trophy, Calendar, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useClubContext } from "@/hooks/use-club-context";
 
 type Match = {
   id: string;
@@ -31,47 +30,47 @@ type DashboardStats = {
   recentPlayers: Player[];
 };
 
-const statCards = [
-  {
-    name: "Total Teams",
-    key: "teams" as const,
-    icon: Users,
-    iconBg: "bg-blue-100 dark:bg-blue-900/20",
-    iconColor: "text-blue-600 dark:text-blue-400",
-    href: "/club/teams",
-    trend: { value: "+2 this season", isPositive: true },
-  },
-  {
-    name: "Total Players",
-    key: "players" as const,
-    icon: UserSquare2,
-    iconBg: "bg-purple-100 dark:bg-purple-900/20",
-    iconColor: "text-purple-600 dark:text-purple-400",
-    href: "/club/players",
-    trend: { value: "+15 this month", isPositive: true },
-  },
-  {
-    name: "Total Coaches",
-    key: "coaches" as const,
-    icon: Users,
-    iconBg: "bg-green-100 dark:bg-green-900/20",
-    iconColor: "text-green-600 dark:text-green-400",
-    href: "/club/coaches",
-    trend: { value: "+1 this month", isPositive: true },
-  },
-  {
-    name: "Upcoming Events",
-    key: "upcomingMatches" as const,
-    icon: Calendar,
-    iconBg: "bg-orange-100 dark:bg-orange-900/20",
-    iconColor: "text-orange-600 dark:text-orange-400",
-    href: "/club/matches",
-    trend: { value: "Next 7 days", isPositive: true },
-  },
-];
+export default function ClubDashboardPage({ clubId }: { clubId: string }) {
+  const [clubName, setClubName] = useState<string>("");
 
-export default function ClubDashboardPage() {
-  const { selectedClub, selectedClubId } = useClubContext();
+  const statCards = [
+    {
+      name: "Total Teams",
+      key: "teams" as const,
+      icon: Users,
+      iconBg: "bg-blue-100 dark:bg-blue-900/20",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      href: `/club/${clubId}/teams`,
+      trend: { value: "+2 this season", isPositive: true },
+    },
+    {
+      name: "Total Players",
+      key: "players" as const,
+      icon: UserSquare2,
+      iconBg: "bg-purple-100 dark:bg-purple-900/20",
+      iconColor: "text-purple-600 dark:text-purple-400",
+      href: `/club/${clubId}/players`,
+      trend: { value: "+15 this month", isPositive: true },
+    },
+    {
+      name: "Total Coaches",
+      key: "coaches" as const,
+      icon: Users,
+      iconBg: "bg-green-100 dark:bg-green-900/20",
+      iconColor: "text-green-600 dark:text-green-400",
+      href: `/club/${clubId}/coaches`,
+      trend: { value: "+1 this month", isPositive: true },
+    },
+    {
+      name: "Upcoming Events",
+      key: "upcomingMatches" as const,
+      icon: Calendar,
+      iconBg: "bg-orange-100 dark:bg-orange-900/20",
+      iconColor: "text-orange-600 dark:text-orange-400",
+      href: `/club/${clubId}/matches`,
+      trend: { value: "Next 7 days", isPositive: true },
+    },
+  ];
   const [stats, setStats] = useState<DashboardStats>({
     teams: 0,
     players: 0,
@@ -82,24 +81,33 @@ export default function ClubDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedClubId) return;
-
     async function fetchStats() {
       setLoading(true);
       const supabase = createClient();
 
       try {
+        // Get club name
+        const { data: clubData } = await supabase
+          .from("clubs")
+          .select("name")
+          .eq("id", clubId)
+          .single();
+
+        if (clubData) {
+          setClubName(clubData.name);
+        }
+
         // Get teams count
         const { count: teamsCount } = await supabase
           .from("teams")
           .select("*", { count: "exact", head: true })
-          .eq("club_id", selectedClubId!);
+          .eq("club_id", clubId);
 
         // Get team IDs for player count
         const { data: teams } = await supabase
           .from("teams")
           .select("id")
-          .eq("club_id", selectedClubId!);
+          .eq("club_id", clubId);
 
         const teamIds = teams?.map(t => t.id) || [];
         let playersCount = 0;
@@ -117,7 +125,7 @@ export default function ClubDashboardPage() {
         const { count: coachesCount } = await supabase
           .from("coaches")
           .select("*", { count: "exact", head: true })
-          .eq("club_id", selectedClubId!);
+          .eq("club_id", clubId);
 
         // Get upcoming matches
         const today = new Date().toISOString().split("T")[0];
@@ -129,7 +137,7 @@ export default function ClubDashboardPage() {
             *,
             teams!inner(club_id, name)
           `)
-          .eq("teams.club_id", selectedClubId!)
+          .eq("teams.club_id", clubId)
           .gte("match_date", today)
           .lte("match_date", nextWeek)
           .order("match_date", { ascending: true })
@@ -139,7 +147,7 @@ export default function ClubDashboardPage() {
         const { data: recentPlayers } = await supabase
           .from("players")
           .select("id, first_name, last_name, created_at")
-          .eq("club_id", selectedClubId!)
+          .eq("club_id", clubId)
           .order("created_at", { ascending: false })
           .limit(5);
 
@@ -158,19 +166,7 @@ export default function ClubDashboardPage() {
     }
 
     fetchStats();
-  }, [selectedClubId]);
-
-  if (!selectedClub) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">
-            No club selected. Please select a club to view the dashboard.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, [clubId]);
 
   if (loading) {
     return (
@@ -186,7 +182,7 @@ export default function ClubDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {selectedClub.name}
+            {clubName}
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Welcome back! Here&apos;s what&apos;s happening with your club today.
@@ -194,7 +190,7 @@ export default function ClubDashboardPage() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/club/players/new"
+            href={`/club/${clubId}/players/create`}
             className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
           >
             <Plus className="h-4 w-4" />
@@ -299,7 +295,7 @@ export default function ClubDashboardPage() {
                 No upcoming matches in the next 7 days.
               </p>
               <Link
-                href="/club/matches/new"
+                href={`/club/${clubId}/matches/new`}
                 className="mt-4 inline-block rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
               >
                 Schedule Match
@@ -310,7 +306,7 @@ export default function ClubDashboardPage() {
         {stats.upcomingMatches.length > 0 && (
           <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-900/50">
             <Link
-              href="/club/matches"
+              href={`/club/${clubId}/matches`}
               className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
             >
               View all matches →
@@ -360,7 +356,7 @@ export default function ClubDashboardPage() {
                 No players yet. Add your first player to get started.
               </p>
               <Link
-                href="/club/players/new"
+                href={`/club/${clubId}/players/create`}
                 className="mt-4 inline-block rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
               >
                 Add Player
@@ -371,7 +367,7 @@ export default function ClubDashboardPage() {
         {stats.recentPlayers.length > 0 && (
           <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-900/50">
             <Link
-              href="/club/players"
+              href={`/club/${clubId}/players`}
               className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
             >
               View all players →

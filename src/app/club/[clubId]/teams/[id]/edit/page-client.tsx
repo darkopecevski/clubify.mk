@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
-import { useClubContext } from "@/hooks/use-club-context";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 
 const teamSchema = z.object({
   name: z.string().min(2, "Team name must be at least 2 characters"),
@@ -19,70 +18,172 @@ const teamSchema = z.object({
 
 type TeamFormData = z.infer<typeof teamSchema>;
 
-export default function CreateTeamPage() {
+type Team = {
+  id: string;
+  name: string;
+  age_group: string;
+  season: string | null;
+  is_active: boolean;
+  club_id: string;
+};
+
+export default function EditTeamPageClient({
+  clubId,
+  teamId,
+}: {
+  clubId: string;
+  teamId: string;
+}) {
   const router = useRouter();
-  const { selectedClubId } = useClubContext();
   const [loading, setLoading] = useState(false);
+  const [loadingTeam, setLoadingTeam] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<TeamFormData>({
     resolver: zodResolver(teamSchema),
-    defaultValues: {
-      is_active: true,
-    },
   });
 
-  const onSubmit = async (data: TeamFormData) => {
-    if (!selectedClubId) {
-      setError("No club selected");
-      return;
-    }
+  useEffect(() => {
+    fetchTeam();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, teamId]);
 
+  async function fetchTeam() {
+    setLoadingTeam(true);
+    const supabase = createClient();
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("id", teamId)
+        .eq("club_id", clubId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      setTeam(data);
+      reset({
+        name: data.name,
+        age_group: data.age_group,
+        season: data.season || "",
+        is_active: data.is_active,
+      });
+    } catch (err) {
+      console.error("Error fetching team:", err);
+      setError("Failed to load team");
+    } finally {
+      setLoadingTeam(false);
+    }
+  }
+
+  const onSubmit = async (data: TeamFormData) => {
     setLoading(true);
     setError(null);
 
     try {
       const supabase = createClient();
 
-      const { error: insertError } = await supabase.from("teams").insert({
-        club_id: selectedClubId,
-        name: data.name,
-        age_group: data.age_group,
-        season: data.season || null,
-        is_active: data.is_active,
-      });
+      const { error: updateError } = await supabase
+        .from("teams")
+        .update({
+          name: data.name,
+          age_group: data.age_group,
+          season: data.season || null,
+          is_active: data.is_active,
+        })
+        .eq("id", teamId)
+        .eq("club_id", clubId);
 
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
 
-      router.push("/club/teams");
+      router.push(`/club/${clubId}/teams`);
     } catch (err) {
-      console.error("Error creating team:", err);
-      setError((err as Error).message || "Failed to create team");
+      console.error("Error updating team:", err);
+      setError((err as Error).message || "Failed to update team");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+
+      // Check if team has players
+      const { data: players } = await supabase
+        .from("team_players")
+        .select("id")
+        .eq("team_id", teamId)
+        .limit(1);
+
+      if (players && players.length > 0) {
+        setError("Cannot delete team with assigned players. Please remove all players first.");
+        setDeleteConfirm(false);
+        setLoading(false);
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", teamId)
+        .eq("club_id", clubId);
+
+      if (deleteError) throw deleteError;
+
+      router.push(`/club/${clubId}/teams`);
+    } catch (err) {
+      console.error("Error deleting team:", err);
+      setError((err as Error).message || "Failed to delete team");
+      setDeleteConfirm(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loadingTeam) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Team not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/club/teams"
+          href={`/club/${clubId}/teams`}
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Create New Team
+            Edit Team
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Add a new team to your club
+            Update team information
           </p>
         </div>
       </div>
@@ -197,24 +298,65 @@ export default function CreateTeamPage() {
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-            <Link
-              href="/club/teams"
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </Link>
+          <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
             <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-500 dark:hover:bg-green-600"
+              type="button"
+              onClick={() => setDeleteConfirm(true)}
+              className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/20"
             >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create Team
+              <Trash2 className="h-4 w-4" />
+              Delete Team
             </button>
+            <div className="flex gap-3">
+              <Link
+                href={`/club/${clubId}/teams`}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-500 dark:hover:bg-green-600"
+              >
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Delete Team
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Are you sure you want to delete this team? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                disabled={loading}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={loading}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

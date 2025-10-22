@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useClubContext } from "@/hooks/use-club-context";
 import { Plus, UserSquare2, Loader2, Users } from "lucide-react";
 
 type Player = {
@@ -21,8 +20,7 @@ type Player = {
   };
 };
 
-export default function PlayersPage() {
-  const { selectedClubId } = useClubContext();
+export default function PlayersPageClient({ clubId }: { clubId: string }) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -32,15 +30,11 @@ export default function PlayersPage() {
   });
 
   useEffect(() => {
-    if (selectedClubId) {
-      fetchPlayers();
-    }
+    fetchPlayers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClubId]);
+  }, [clubId]);
 
   async function fetchPlayers() {
-    if (!selectedClubId) return;
-
     setLoading(true);
     const supabase = createClient();
 
@@ -49,7 +43,7 @@ export default function PlayersPage() {
       const { data: playersData, error: playersError } = await supabase
         .from("players")
         .select("*")
-        .eq("club_id", selectedClubId)
+        .eq("club_id", clubId)
         .order("created_at", { ascending: false });
 
       if (playersError) throw playersError;
@@ -124,7 +118,7 @@ export default function PlayersPage() {
           </p>
         </div>
         <Link
-          href="/club/players/create"
+          href={`/club/${clubId}/players/create`}
           className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
         >
           <Plus className="h-4 w-4" />
@@ -199,7 +193,7 @@ export default function PlayersPage() {
               Get started by adding your first player
             </p>
             <Link
-              href="/club/players/create"
+              href={`/club/${clubId}/players/create`}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               <Plus className="h-4 w-4" />
@@ -281,7 +275,7 @@ export default function PlayersPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <Link
-                        href={`/club/players/${player.id}`}
+                        href={`/club/${clubId}/players/${player.id}`}
                         className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                       >
                         View

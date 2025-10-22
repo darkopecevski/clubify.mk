@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useClubContext } from "@/hooks/use-club-context";
 import {
   ArrowLeft,
   ArrowRight,
@@ -71,9 +70,8 @@ const steps = [
   { number: 5, title: "Parent/Guardian", icon: Users },
 ];
 
-export default function CreatePlayerPage() {
+export default function CreatePlayerPageClient({ clubId }: { clubId: string }) {
   const router = useRouter();
-  const { selectedClubId } = useClubContext();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,11 +137,6 @@ export default function CreatePlayerPage() {
   };
 
   const onSubmit = async (data: PlayerFormData) => {
-    if (!selectedClubId) {
-      setError("No club selected");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -153,7 +146,7 @@ export default function CreatePlayerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          club_id: selectedClubId,
+          club_id: clubId,
           jersey_number: data.jersey_number ? parseInt(data.jersey_number) : null,
         }),
       });
@@ -172,7 +165,7 @@ export default function CreatePlayerPage() {
           parentPassword: result.parent_password,
         });
       } else {
-        router.push("/club/players");
+        router.push(`/club/${clubId}/players`);
       }
     } catch (err) {
       console.error("Error creating player:", err);
@@ -187,7 +180,7 @@ export default function CreatePlayerPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/club/players"
+          href={`/club/${clubId}/players`}
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -706,7 +699,7 @@ export default function CreatePlayerPage() {
             </div>
             <div className="flex gap-3">
               <Link
-                href="/club/players"
+                href={`/club/${clubId}/players`}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Cancel
@@ -768,7 +761,7 @@ export default function CreatePlayerPage() {
             </div>
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => router.push("/club/players")}
+                onClick={() => router.push(`/club/${clubId}/players`)}
                 className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
               >
                 Done

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useClubContext } from "@/hooks/use-club-context";
 import { Plus, Users, Loader2, Calendar, Shield } from "lucide-react";
 
 type Team = {
@@ -19,8 +18,7 @@ type Team = {
   };
 };
 
-export default function TeamsPage() {
-  const { selectedClubId } = useClubContext();
+export default function TeamsPageClient({ clubId }: { clubId: string }) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -30,15 +28,11 @@ export default function TeamsPage() {
   });
 
   useEffect(() => {
-    if (selectedClubId) {
-      fetchTeams();
-    }
+    fetchTeams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClubId]);
+  }, [clubId]);
 
   async function fetchTeams() {
-    if (!selectedClubId) return;
-
     setLoading(true);
     const supabase = createClient();
 
@@ -47,7 +41,7 @@ export default function TeamsPage() {
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*")
-        .eq("club_id", selectedClubId)
+        .eq("club_id", clubId)
         .order("created_at", { ascending: false });
 
       if (teamsError) throw teamsError;
@@ -112,7 +106,7 @@ export default function TeamsPage() {
           </p>
         </div>
         <Link
-          href="/club/teams/create"
+          href={`/club/${clubId}/teams/create`}
           className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
         >
           <Plus className="h-4 w-4" />
@@ -187,7 +181,7 @@ export default function TeamsPage() {
               Get started by creating your first team
             </p>
             <Link
-              href="/club/teams/create"
+              href={`/club/${clubId}/teams/create`}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               <Plus className="h-4 w-4" />
@@ -268,7 +262,7 @@ export default function TeamsPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <Link
-                        href={`/club/teams/${team.id}/edit`}
+                        href={`/club/${clubId}/teams/${team.id}/edit`}
                         className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                       >
                         Edit
