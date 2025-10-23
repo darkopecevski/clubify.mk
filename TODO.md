@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-23 (Phase 4.4 & 4.5 COMPLETE! 🎉 - CSV Import & Team Assignment Ready!)
+**Last Updated:** 2025-10-23 (Phase 4.4 CSV Import - FULLY TESTED & PRODUCTION READY! 🎉)
 
 ## Development Principles
 
@@ -419,7 +419,7 @@
 - ✅ 4.3.3 - Player Edit (COMPLETE)
 - ✅ 4.3.4 - Player Delete (Soft Delete COMPLETE)
 
-### 4.4 Player Management - CSV Import ✅
+### 4.4 Player Management - CSV Import ✅ **FULLY TESTED & PRODUCTION READY!**
 - [x] Create CSV template download (all 26 fields)
 - [x] Create CSV upload component with drag & drop
 - [x] Validate CSV format and data (Zod schemas)
@@ -429,18 +429,41 @@
 - [x] Show import summary (success/failed counts)
 - [x] Download error log for invalid rows
 - [x] Access control (super_admin + club_admin)
-- [x] Test: Build successful, ready for testing
+- [x] **Made import operations idempotent** (retry-safe)
+  - [x] Check if player exists before creating
+  - [x] Check if auth user exists before creating
+  - [x] Check if parent role exists before assigning
+  - [x] Check if player role exists before assigning
+  - [x] Check if parent-player link exists before creating
+  - [x] Check if team assignment exists before creating
+- [x] **Fixed database schema mismatches**
+  - [x] Added missing columns (nationality, city, address, phone, email, user_id, previous_club, medications)
+  - [x] Updated blood type format to match database constraint (A+, A-, B+, B-, AB+, AB-, O+, O-)
+  - [x] Regenerated TypeScript types from database
+- [x] Test: Successfully imported 10 players with all relationships! ✅
 
-**Deliverable:** ✅ CSV bulk player import complete!
+**Deliverable:** ✅ CSV bulk player import FULLY TESTED & PRODUCTION READY!
 
 **Implementation Details:**
 - **CSV Template:** 26 fields covering all player data (personal, football, medical, emergency, parent, team)
-- **Validation:** Client-side Zod validation with detailed error messages
+- **Validation:** Client-side Zod validation with detailed error messages matching database constraints
 - **Parent Accounts:** Auto-creates new parents or reuses existing ones by email
+- **Player Accounts:** Smart handling - reuses existing auth users, creates player records only when needed
 - **Team Assignment:** Optional team assignment by team name + jersey number
-- **Error Handling:** Continues processing even if some rows fail
-- **UI Flow:** Upload → Preview → Import → Results summary
+- **Error Handling:** Continues processing even if some rows fail, detailed error messages per row
+- **Idempotency:** All operations check for existence before insert - safe to retry failed imports
+- **UI Flow:** Upload → Preview → Import → Results summary with error download
 - **API:** POST `/api/club/players/import` - processes all valid rows in bulk
+- **Database Migration:** `20251023140000_add_missing_player_columns.sql`
+
+**Production Testing:**
+- ✅ Imported 10 players for FK Spartak (2 teams: "2017" and "U9")
+- ✅ Verified parent account creation and reuse
+- ✅ Verified player account creation and reuse
+- ✅ Verified role assignments
+- ✅ Verified parent-player relationships
+- ✅ Verified team assignments with jersey numbers
+- ✅ Verified retry after partial failure works correctly
 
 ### 4.5 Player Team Assignment ✅
 - [x] Create team detail/roster page (`/club/[clubId]/teams/[id]`)
@@ -1024,24 +1047,29 @@
 
 ## Current Focus
 
-**Now:** Phase 4.4 & 4.5 Complete! ✅ **CSV Import & Team Assignment!**
+**Now:** Phase 4.4 Complete & Production Tested! ✅ **CSV Import Fully Functional!**
 
 **Next Steps (in priority order):**
-1. **4.6 - Coach Management** (Add/manage coaches)
-2. **4.5 Enhancement** - Jersey number editing (optional)
-3. **Phase 5** - Coach Portal (dashboard, training, attendance)
-4. **Phase 6** - Parent Portal (view player info, payments)
+1. **4.6 - Coach Management** (Add/manage coaches, assign to teams)
+2. **4.5 Enhancement** - Jersey number editing (inline or modal-based)
+3. **Phase 5** - Coach Portal (dashboard, training sessions, attendance tracking, matches)
+4. **Phase 6** - Parent Portal (view player info, payments, schedules)
 
 **Completed Recently:**
-- ✅ **Phase 4.4 - CSV Player Import** (COMPLETE!) 🎉
+- ✅ **Phase 4.4 - CSV Player Import** (PRODUCTION READY!) 🎉
   - CSV template with all 26 player fields
   - Drag & drop upload with validation
   - Preview table with validation status
-  - Bulk import with error handling
-  - Auto-create/reuse parent accounts
-  - Optional team assignment by name
-  - Error log download
-  - Results summary
+  - Bulk import with comprehensive error handling
+  - **Idempotent operations** - retry-safe after failures
+  - **Smart account management** - reuses existing auth users and parent accounts
+  - Auto-create/reuse parent accounts by email
+  - Optional team assignment by team name + jersey number
+  - Error log download for debugging
+  - Results summary (success/failed counts)
+  - **Successfully tested with 10 players** imported to FK Spartak
+  - Fixed blood type validation to match database (A+, A-, etc.)
+  - Added missing database columns (nationality, city, address, etc.)
 - ✅ **Phase 4.5 - Player Team Assignment** (COMPLETE!) 🎉
   - Team detail/roster page with player management
   - Assign players to teams (from player profile OR team page)
@@ -1091,5 +1119,5 @@
 ---
 
 **Last Review:** 2025-10-23
-**Progress:** Phase 4.4 & 4.5 Complete! (CSV Import + Team Assignment) 🎉
+**Progress:** Phase 4.4 Complete & Production Tested! (CSV Import - Idempotent & Retry-Safe) 🎉
 **Next Milestone:** Phase 4.6 - Coach Management
