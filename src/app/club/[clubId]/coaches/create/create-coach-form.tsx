@@ -132,6 +132,24 @@ export default function CreateCoachForm({ clubId }: { clubId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href={`/club/${clubId}/coaches`}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Add Coach
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Create a new coach account and profile
+          </p>
+        </div>
+      </div>
+
       {/* Error Message */}
       {errors.submit && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
@@ -320,14 +338,7 @@ export default function CreateCoachForm({ clubId }: { clubId: string }) {
         </div>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-          <Link
-            href={`/club/${clubId}/coaches`}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Cancel
-          </Link>
+        <div className="flex items-center justify-end border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
           <button
             type="submit"
             disabled={isSubmitting}

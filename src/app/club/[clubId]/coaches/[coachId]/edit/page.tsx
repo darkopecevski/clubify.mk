@@ -56,14 +56,7 @@ export default async function EditCoachPage({
   const email = userWithEmail?.email || "";
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Coach</h1>
-        <p className="text-muted-foreground mt-1">
-          Update coach information and credentials
-        </p>
-      </div>
-
+    <div className="space-y-6">
       <EditCoachForm clubId={clubId} coach={{ ...coach, email }} />
     </div>
   );
