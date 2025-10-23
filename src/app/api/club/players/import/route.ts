@@ -144,8 +144,9 @@ export async function POST(request: Request) {
       let playerUserId: string;
 
       // Type assertion needed because TypeScript types not yet updated on Netlify build
+      // The database HAS the user_id column, but cached types don't know about it yet
       type PlayerData = { id: string; user_id: string | null };
-      const playerData = existingPlayerData as PlayerData | null;
+      const playerData = existingPlayerData as unknown as PlayerData | null;
 
       if (playerData && playerData.id) {
         // Player already exists, use existing player
@@ -210,7 +211,7 @@ export async function POST(request: Request) {
           throw new Error(`Failed to create player: ${playerError?.message}`);
         }
 
-        player = newPlayer as PlayerData;
+        player = newPlayer as unknown as PlayerData;
       }
 
       // 4. Link parent to player (check if already exists)
