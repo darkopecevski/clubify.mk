@@ -104,56 +104,75 @@ export default function CoachesPageClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Coaches</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Coaches
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage your coaching staff
           </p>
         </div>
-        <Link href={`/club/${clubId}/coaches/create`}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Coach
-          </Button>
+        <Link
+          href={`/club/${clubId}/coaches/create`}
+          className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+        >
+          <Plus className="h-4 w-4" />
+          Add Coach
         </Link>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Total Coaches
-            </h3>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Total Coaches
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                {coaches.length}
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/20">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">{coaches.length}</p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Licensed
-            </h3>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Licensed
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                {coaches.filter((c) => c.license_type).length}
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/20">
+              <Award className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">
-            {coaches.filter((c) => c.license_type).length}
-          </p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Active
-            </h3>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Active
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                {coaches.filter((c) => c.is_active).length}
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/20">
+              <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">
-            {coaches.filter((c) => c.is_active).length}
-          </p>
         </div>
       </div>
 
       {/* Coaches Table */}
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
         <Table>
           <TableHeader>
             <TableRow>
@@ -171,13 +190,14 @@ export default function CoachesPageClient({
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center gap-2">
-                    <Users className="h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">No coaches yet</p>
-                    <Link href={`/club/${clubId}/coaches/create`}>
-                      <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add First Coach
-                      </Button>
+                    <Users className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                    <p className="text-gray-600 dark:text-gray-400">No coaches yet</p>
+                    <Link
+                      href={`/club/${clubId}/coaches/create`}
+                      className="mt-2 flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add First Coach
                     </Link>
                   </div>
                 </TableCell>
