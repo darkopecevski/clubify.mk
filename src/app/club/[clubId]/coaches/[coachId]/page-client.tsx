@@ -1,18 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  Edit,
-  Mail,
-  Phone,
-  Award,
-  Calendar,
-  Users,
-  Briefcase,
-} from "lucide-react";
+import { Users } from "lucide-react";
 
 type Coach = {
   id: string;
@@ -81,191 +70,209 @@ export default function CoachProfileClient({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link href={`/club/${clubId}/coaches`}>
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Coaches
-          </Button>
-        </Link>
-        <Link href={`/club/${clubId}/coaches/${coach.id}/edit`}>
-          <Button>
-            <Edit className="h-4 w-4 mr-2" />
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {coach.users?.full_name || "Unknown Coach"}
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Coach Profile
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Link
+            href={`/club/${clubId}/coaches/${coach.id}/edit`}
+            className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+          >
             Edit Coach
-          </Button>
-        </Link>
+          </Link>
+          <Link
+            href={`/club/${clubId}/coaches`}
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            Back to Coaches
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Profile Card */}
-        <div className="lg:col-span-1">
-          <div className="rounded-lg border bg-card p-6 space-y-6">
-            <div className="flex flex-col items-center text-center">
-              {coach.users?.avatar_url ? (
-                <img
-                  src={coach.users.avatar_url}
-                  alt={coach.users?.full_name || "Coach"}
-                  className="h-32 w-32 rounded-full object-cover mb-4"
-                />
-              ) : (
-                <div className="h-32 w-32 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="text-4xl font-medium">
-                    {coach.users?.full_name
-                      ?.split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase() || "?"}
-                  </span>
-                </div>
-              )}
-              <h2 className="text-2xl font-bold">
+      {/* Status Badge */}
+      <div>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+            coach.is_active
+              ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+              : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+          }`}
+        >
+          {coach.is_active ? "Active" : "Inactive"}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Contact Information */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Contact Information
+          </h2>
+          <dl className="space-y-3">
+            <div>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-white">
                 {coach.users?.full_name || "Unknown"}
-              </h2>
-              {coach.specialization && (
-                <p className="text-muted-foreground mt-1">
-                  {coach.specialization}
-                </p>
-              )}
-              <div className="mt-4">
-                {coach.is_active ? (
-                  <Badge
-                    variant="outline"
-                    className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                  >
-                    Active
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-                  >
-                    Inactive
-                  </Badge>
-                )}
-              </div>
+              </dd>
             </div>
-
-            <div className="space-y-3 pt-6 border-t">
-              {coach.email && (
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{coach.email}</span>
-                </div>
-              )}
-              {coach.users?.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{coach.users.phone}</span>
-                </div>
-              )}
-              {coach.license_type && (
-                <div className="flex items-center gap-3">
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <span className="text-sm font-medium">
-                      {coach.license_type}
-                    </span>
-                    {coach.license_number && (
-                      <p className="text-xs text-muted-foreground">
-                        #{coach.license_number}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-              {coach.years_of_experience !== null && (
-                <div className="flex items-center gap-3">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {coach.years_of_experience}{" "}
-                    {coach.years_of_experience === 1 ? "year" : "years"} of
-                    experience
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
-                  Joined {new Date(coach.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Bio */}
-          {coach.bio && (
-            <div className="rounded-lg border bg-card p-6">
-              <h3 className="text-lg font-semibold mb-4">Biography</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {coach.bio}
-              </p>
-            </div>
-          )}
-
-          {/* Team Assignments */}
-          <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">Team Assignments</h3>
-              </div>
-              <Link href={`/club/${clubId}/coaches/${coach.id}/assign-teams`}>
-                <Button variant="outline" size="sm">
-                  Manage Teams
-                </Button>
-              </Link>
-            </div>
-
-            {teamAssignments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No team assignments yet
-                </p>
-                <Link href={`/club/${clubId}/coaches/${coach.id}/assign-teams`}>
-                  <Button variant="outline" size="sm" className="mt-4">
-                    Assign to Teams
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {teamAssignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div>
-                      <Link
-                        href={`/club/${clubId}/teams/${assignment.teams?.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {assignment.teams?.name || "Unknown Team"}
-                      </Link>
-                      {assignment.teams?.age_group && (
-                        <p className="text-sm text-muted-foreground">
-                          {assignment.teams.age_group}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant="outline"
-                        className={getRoleBadgeColor(assignment.role)}
-                      >
-                        {formatRoleName(assignment.role)}
-                      </Badge>
-                      <p className="text-sm text-muted-foreground">
-                        Since {new Date(assignment.assigned_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            {coach.email && (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.email}
+                </dd>
               </div>
             )}
-          </div>
+            {coach.users?.phone && (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.users.phone}
+                </dd>
+              </div>
+            )}
+            {coach.specialization && (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Specialization</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.specialization}
+                </dd>
+              </div>
+            )}
+          </dl>
         </div>
+
+        {/* Coaching Credentials */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Coaching Credentials
+          </h2>
+          <dl className="space-y-3">
+            {coach.license_type ? (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">License Type</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.license_type}
+                </dd>
+              </div>
+            ) : (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">License Type</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">Not specified</dd>
+              </div>
+            )}
+            {coach.license_number && (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">License Number</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.license_number}
+                </dd>
+              </div>
+            )}
+            {coach.years_of_experience !== null ? (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Years of Experience</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {coach.years_of_experience} {coach.years_of_experience === 1 ? "year" : "years"}
+                </dd>
+              </div>
+            ) : (
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Years of Experience</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">Not specified</dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Joined</dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                {new Date(coach.created_at).toLocaleDateString()}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      {/* Bio */}
+      {coach.bio && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Biography</h2>
+          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            {coach.bio}
+          </p>
+        </div>
+      )}
+
+      {/* Team Assignments */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Team Assignments
+          </h2>
+          <Link
+            href={`/club/${clubId}/coaches/${coach.id}/assign-teams`}
+            className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700"
+          >
+            <Users className="h-4 w-4" />
+            Manage Teams
+          </Link>
+        </div>
+
+        {teamAssignments.length === 0 ? (
+          <div className="py-12 text-center">
+            <Users className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-white">
+              No team assignments yet
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Get started by assigning this coach to teams
+            </p>
+            <Link
+              href={`/club/${clubId}/coaches/${coach.id}/assign-teams`}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              <Users className="h-4 w-4" />
+              Assign to Teams
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {teamAssignments.map((assignment) => (
+              <div
+                key={assignment.id}
+                className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
+              >
+                <div className="flex-1">
+                  <Link
+                    href={`/club/${clubId}/teams/${assignment.teams?.id}`}
+                    className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400"
+                  >
+                    {assignment.teams?.name || "Unknown Team"}
+                  </Link>
+                  {assignment.teams?.age_group && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {assignment.teams.age_group}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor(assignment.role)}`}
+                  >
+                    {formatRoleName(assignment.role)}
+                  </span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Since {new Date(assignment.assigned_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
