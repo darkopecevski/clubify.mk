@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserRole } from "@/hooks/use-user-role";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus, X } from "lucide-react";
 
 type Player = {
   id: string;
@@ -79,6 +79,9 @@ export default function PlayerProfilePage({
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
+  const [availableTeams, setAvailableTeams] = useState<{ id: string; name: string; age_group: string }[]>([]);
+  const [assigning, setAssigning] = useState(false);
 
   const canEdit = isSuperAdmin() || isClubAdmin(clubId);
 
@@ -155,6 +158,71 @@ export default function PlayerProfilePage({
   useEffect(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
+
+  const fetchAvailableTeams = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("teams")
+      .select("id, name, age_group")
+      .eq("club_id", clubId)
+      .eq("is_active", true)
+      .order("name");
+
+    if (data) {
+      // Filter out teams player is already assigned to
+      const assignedTeamIds = teams.map((t) => t.team_id);
+      const available = data.filter((team) => !assignedTeamIds.includes(team.id));
+      setAvailableTeams(available);
+    }
+  };
+
+  const handleAssignTeam = async (teamId: string) => {
+    setAssigning(true);
+    try {
+      const response = await fetch(`/api/club/teams/${teamId}/players`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player_id: playerId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to assign player to team");
+      }
+
+      // Refresh player data
+      await fetchPlayerData();
+      setShowAssignTeamModal(false);
+    } catch (error) {
+      console.error("Error assigning player to team:", error);
+      alert(error instanceof Error ? error.message : "Failed to assign player to team");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleRemoveFromTeam = async (teamPlayerId: string) => {
+    if (!confirm("Are you sure you want to remove this player from the team?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/club/team-players/${teamPlayerId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to remove player from team");
+      }
+
+      // Refresh player data
+      await fetchPlayerData();
+    } catch (error) {
+      console.error("Error removing player from team:", error);
+      alert(error instanceof Error ? error.message : "Failed to remove player from team");
+    }
+  };
 
   const handleDelete = async () => {
     if (!player) return;
@@ -398,9 +466,23 @@ export default function PlayerProfilePage({
 
       {/* Team Assignments */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          Team Assignments
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Team Assignments
+          </h2>
+          {canEdit && (
+            <button
+              onClick={() => {
+                fetchAvailableTeams();
+                setShowAssignTeamModal(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4" />
+              Assign to Team
+            </button>
+          )}
+        </div>
         {teams.length > 0 ? (
           <div className="space-y-2">
             {teams.map((team) => (
@@ -408,7 +490,7 @@ export default function PlayerProfilePage({
                 key={team.id}
                 className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
               >
-                <div>
+                <div className="flex-1">
                   <Link
                     href={`/club/${clubId}/teams/${team.team_id}`}
                     className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400"
@@ -419,15 +501,26 @@ export default function PlayerProfilePage({
                     Joined: {new Date(team.joined_at).toLocaleDateString()}
                   </p>
                 </div>
-                <span
-                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                    team.is_active
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                      : "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-                  }`}
-                >
-                  {team.is_active ? "Active" : "Inactive"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                      team.is_active
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+                    }`}
+                  >
+                    {team.is_active ? "Active" : "Inactive"}
+                  </span>
+                  {canEdit && (
+                    <button
+                      onClick={() => handleRemoveFromTeam(team.id)}
+                      className="text-red-600 hover:text-red-700 dark:text-red-400"
+                      title="Remove from team"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -443,6 +536,50 @@ export default function PlayerProfilePage({
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Notes</h2>
           <p className="text-sm text-gray-700 dark:text-gray-300">{player.notes}</p>
+        </div>
+      )}
+
+      {/* Assign to Team Modal */}
+      {showAssignTeamModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Assign to Team
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Select a team to assign {player?.first_name} to:
+            </p>
+            <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
+              {availableTeams.length > 0 ? (
+                availableTeams.map((team) => (
+                  <button
+                    key={team.id}
+                    onClick={() => handleAssignTeam(team.id)}
+                    disabled={assigning}
+                    className="flex w-full items-center justify-between rounded-md border border-gray-200 p-3 text-left hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{team.age_group}</p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No available teams. Player is already assigned to all active teams.
+                </p>
+              )}
+            </div>
+            <div className="mt-6">
+              <button
+                onClick={() => setShowAssignTeamModal(false)}
+                disabled={assigning}
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
