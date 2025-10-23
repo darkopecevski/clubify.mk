@@ -79,11 +79,7 @@ export default function TeamDetailPage({
     const { data: rosterData, error: rosterError } = await supabase
       .from("team_players")
       .select(`
-        id,
-        player_id,
-        jersey_number,
-        joined_at,
-        is_active,
+        *,
         players!inner (
           id,
           first_name,
@@ -98,7 +94,8 @@ export default function TeamDetailPage({
     if (rosterError) {
       console.error("Error fetching roster:", rosterError);
     } else if (rosterData) {
-      setRoster(rosterData as TeamPlayer[]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setRoster(rosterData as any);
     }
 
     setLoading(false);
