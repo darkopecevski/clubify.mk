@@ -82,6 +82,9 @@ export default function PlayerProfilePage({
   const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
   const [availableTeams, setAvailableTeams] = useState<{ id: string; name: string; age_group: string }[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [showRemoveTeamModal, setShowRemoveTeamModal] = useState(false);
+  const [teamToRemove, setTeamToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [removingFromTeam, setRemovingFromTeam] = useState(false);
 
   const canEdit = isSuperAdmin() || isClubAdmin(clubId);
 
@@ -201,13 +204,12 @@ export default function PlayerProfilePage({
     }
   };
 
-  const handleRemoveFromTeam = async (teamPlayerId: string) => {
-    if (!confirm("Are you sure you want to remove this player from the team?")) {
-      return;
-    }
+  const handleRemoveFromTeam = async () => {
+    if (!teamToRemove) return;
 
+    setRemovingFromTeam(true);
     try {
-      const response = await fetch(`/api/club/team-players/${teamPlayerId}`, {
+      const response = await fetch(`/api/club/team-players/${teamToRemove.id}`, {
         method: "DELETE",
       });
 
@@ -218,9 +220,13 @@ export default function PlayerProfilePage({
 
       // Refresh player data
       await fetchPlayerData();
+      setShowRemoveTeamModal(false);
+      setTeamToRemove(null);
     } catch (error) {
       console.error("Error removing player from team:", error);
       alert(error instanceof Error ? error.message : "Failed to remove player from team");
+    } finally {
+      setRemovingFromTeam(false);
     }
   };
 
@@ -513,7 +519,10 @@ export default function PlayerProfilePage({
                   </span>
                   {canEdit && (
                     <button
-                      onClick={() => handleRemoveFromTeam(team.id)}
+                      onClick={() => {
+                        setTeamToRemove({ id: team.id, name: team.team_name });
+                        setShowRemoveTeamModal(true);
+                      }}
                       className="text-red-600 hover:text-red-700 dark:text-red-400"
                       title="Remove from team"
                     >
@@ -536,6 +545,44 @@ export default function PlayerProfilePage({
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Notes</h2>
           <p className="text-sm text-gray-700 dark:text-gray-300">{player.notes}</p>
+        </div>
+      )}
+
+      {/* Remove from Team Confirmation Modal */}
+      {showRemoveTeamModal && teamToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Remove from Team
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold">
+                {player?.first_name} {player?.last_name}
+              </span>{" "}
+              from{" "}
+              <span className="font-semibold">{teamToRemove.name}</span>?
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleRemoveFromTeam}
+                disabled={removingFromTeam}
+                className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {removingFromTeam ? "Removing..." : "Remove"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowRemoveTeamModal(false);
+                  setTeamToRemove(null);
+                }}
+                disabled={removingFromTeam}
+                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
