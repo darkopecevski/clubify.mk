@@ -89,13 +89,13 @@ export async function POST(request: Request) {
           .eq("id", coachUserId);
       }
     } else {
-      // Create new coach user account
-      const tempPassword = `temp${Math.random().toString(36).slice(2, 10)}!`;
+      // Create new coach user account with default password
+      const defaultPassword = "ClubifyCoach2025!";
 
       const { data: authData, error: authError } =
         await adminSupabase.auth.admin.createUser({
           email: email,
-          password: tempPassword,
+          password: defaultPassword,
           email_confirm: true,
           user_metadata: {
             full_name: full_name,
