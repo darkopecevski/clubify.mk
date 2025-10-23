@@ -2,17 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -143,155 +132,210 @@ export default function CreateCoachForm({ clubId }: { clubId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-lg border bg-card p-6 space-y-6">
-        <h2 className="text-xl font-semibold">Basic Information</h2>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">
-              Full Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="full_name"
-              name="full_name"
-              value={formData.full_name}
-              onChange={handleChange}
-              placeholder="John Doe"
-              className={errors.full_name ? "border-destructive" : ""}
-            />
-            {errors.full_name && (
-              <p className="text-sm text-destructive">{errors.full_name}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="coach@example.com"
-              className={errors.email ? "border-destructive" : ""}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="070123456"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="specialization">Specialization</Label>
-            <Input
-              id="specialization"
-              name="specialization"
-              value={formData.specialization}
-              onChange={handleChange}
-              placeholder="e.g., Youth Development, Tactics"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-card p-6 space-y-6">
-        <h2 className="text-xl font-semibold">Coaching Credentials</h2>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="license_type">License Type</Label>
-            <Select
-              value={formData.license_type}
-              onValueChange={(value) =>
-                handleSelectChange("license_type", value)
-              }
-            >
-              <SelectTrigger id="license_type">
-                <SelectValue placeholder="Select license type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UEFA Pro">UEFA Pro</SelectItem>
-                <SelectItem value="UEFA A">UEFA A</SelectItem>
-                <SelectItem value="UEFA B">UEFA B</SelectItem>
-                <SelectItem value="UEFA C">UEFA C</SelectItem>
-                <SelectItem value="Grassroots">Grassroots</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="license_number">License Number</Label>
-            <Input
-              id="license_number"
-              name="license_number"
-              value={formData.license_number}
-              onChange={handleChange}
-              placeholder="e.g., UEFA-A-12345"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="years_of_experience">Years of Experience</Label>
-            <Input
-              id="years_of_experience"
-              name="years_of_experience"
-              type="number"
-              min="0"
-              value={formData.years_of_experience}
-              onChange={handleChange}
-              placeholder="5"
-              className={errors.years_of_experience ? "border-destructive" : ""}
-            />
-            {errors.years_of_experience && (
-              <p className="text-sm text-destructive">
-                {errors.years_of_experience}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            name="bio"
-            value={formData.bio}
-            onChange={handleChange}
-            placeholder="Brief biography and coaching philosophy..."
-            rows={4}
-          />
-        </div>
-      </div>
-
+      {/* Error Message */}
       {errors.submit && (
-        <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{errors.submit}</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+          <p className="text-sm text-red-800 dark:text-red-400">{errors.submit}</p>
         </div>
       )}
 
-      <div className="flex items-center gap-4">
-        <Link href={`/club/${clubId}/coaches`}>
-          <Button type="button" variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      {/* Form */}
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="space-y-6 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h2>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="full_name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Full Name *
+              </label>
+              <input
+                id="full_name"
+                name="full_name"
+                type="text"
+                value={formData.full_name}
+                onChange={handleChange}
+                placeholder="John Doe"
+                className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+              />
+              {errors.full_name && (
+                <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                  {errors.full_name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Email *
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="coach@example.com"
+                className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+              />
+              {errors.email && (
+                <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Phone
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="text"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="070123456"
+                className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="specialization"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Specialization
+              </label>
+              <input
+                id="specialization"
+                name="specialization"
+                type="text"
+                value={formData.specialization}
+                onChange={handleChange}
+                placeholder="e.g., Youth Development, Tactics"
+                className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Coaching Credentials</h2>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="license_type"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  License Type
+                </label>
+                <select
+                  id="license_type"
+                  name="license_type"
+                  value={formData.license_type}
+                  onChange={(e) => handleSelectChange("license_type", e.target.value)}
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:focus:border-green-400"
+                >
+                  <option value="">Select license type</option>
+                  <option value="UEFA Pro">UEFA Pro</option>
+                  <option value="UEFA A">UEFA A</option>
+                  <option value="UEFA B">UEFA B</option>
+                  <option value="UEFA C">UEFA C</option>
+                  <option value="Grassroots">Grassroots</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="license_number"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  License Number
+                </label>
+                <input
+                  id="license_number"
+                  name="license_number"
+                  type="text"
+                  value={formData.license_number}
+                  onChange={handleChange}
+                  placeholder="e.g., UEFA-A-12345"
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="years_of_experience"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Years of Experience
+                </label>
+                <input
+                  id="years_of_experience"
+                  name="years_of_experience"
+                  type="number"
+                  min="0"
+                  value={formData.years_of_experience}
+                  onChange={handleChange}
+                  placeholder="5"
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+                />
+                {errors.years_of_experience && (
+                  <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
+                    {errors.years_of_experience}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <label
+                htmlFor="bio"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Bio
+              </label>
+              <textarea
+                id="bio"
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Brief biography and coaching philosophy..."
+                rows={4}
+                className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500 dark:focus:border-green-400"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <Link
+            href={`/club/${clubId}/coaches`}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
             Cancel
-          </Button>
-        </Link>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Coach"}
-        </Button>
+          </Link>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-500 dark:hover:bg-green-600"
+          >
+            {isSubmitting ? "Creating..." : "Create Coach"}
+          </button>
+        </div>
       </div>
     </form>
   );
