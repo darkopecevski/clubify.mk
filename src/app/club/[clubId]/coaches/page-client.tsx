@@ -3,15 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Mail, Phone, Award, Users, Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 type Coach = {
@@ -172,23 +163,38 @@ export default function CoachesPageClient({
       </div>
 
       {/* Coaches Table */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>License</TableHead>
-              <TableHead>Experience</TableHead>
-              <TableHead>Teams</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  License
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Experience
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Teams
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
             {coaches.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Users className="h-12 w-12 text-gray-400 dark:text-gray-500" />
                     <p className="text-gray-600 dark:text-gray-400">No coaches yet</p>
@@ -200,12 +206,12 @@ export default function CoachesPageClient({
                       Add First Coach
                     </Link>
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               coaches.map((coach) => (
-                <TableRow key={coach.id}>
-                  <TableCell>
+                <tr key={coach.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {coach.users?.avatar_url ? (
                         <img
@@ -238,8 +244,8 @@ export default function CoachesPageClient({
                         )}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="flex flex-col gap-1 text-sm">
                       {coach.email && (
                         <div className="flex items-center gap-1">
@@ -254,8 +260,8 @@ export default function CoachesPageClient({
                         </div>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-6 py-4">
                     {coach.license_type ? (
                       <div className="flex flex-col gap-1">
                         <span className="font-medium">{coach.license_type}</span>
@@ -268,8 +274,8 @@ export default function CoachesPageClient({
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-6 py-4">
                     {coach.years_of_experience !== null ? (
                       <span>
                         {coach.years_of_experience}{" "}
@@ -278,8 +284,8 @@ export default function CoachesPageClient({
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {coach.teams.length > 0 ? (
                         coach.teams.map((ta) => (
@@ -297,8 +303,8 @@ export default function CoachesPageClient({
                         </span>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-6 py-4">
                     {coach.is_active ? (
                       <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                         Active
@@ -308,29 +314,30 @@ export default function CoachesPageClient({
                         Inactive
                       </Badge>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </td>
+                  <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/club/${clubId}/coaches/${coach.id}/edit`}>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                      <Link
+                        href={`/club/${clubId}/coaches/${coach.id}/edit`}
+                        className="rounded p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                      >
+                        <Edit className="h-4 w-4" />
                       </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
                         onClick={() => handleDelete(coach.id)}
                         disabled={isDeleting === coach.id}
+                        className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
