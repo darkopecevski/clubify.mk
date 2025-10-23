@@ -11,7 +11,7 @@ type Team = {
   club_id: string;
   name: string;
   age_group: string;
-  season: string;
+  season: string | null;
   is_active: boolean;
   created_at: string;
 };
