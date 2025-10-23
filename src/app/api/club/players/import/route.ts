@@ -133,7 +133,6 @@ export async function POST(request: Request) {
       // 2. Check if player already exists by email
       const playerEmail = `${data.email_prefix}@${club.slug}.clubify.mk`;
 
-      // @ts-expect-error - TypeScript types not updated yet after migration
       const { data: existingPlayerData } = await adminSupabase
         .from("players")
         .select("id, user_id")
@@ -144,12 +143,9 @@ export async function POST(request: Request) {
       let player: { id: string; user_id: string | null };
       let playerUserId: string;
 
-      // @ts-expect-error - TypeScript types not updated yet after migration
       if (existingPlayerData && existingPlayerData.id) {
         // Player already exists, use existing player
-        // @ts-expect-error - TypeScript types not updated yet after migration
         player = { id: existingPlayerData.id, user_id: existingPlayerData.user_id };
-        // @ts-expect-error - TypeScript types not updated yet after migration
         playerUserId = existingPlayerData.user_id || "";
 
         if (!playerUserId) {
