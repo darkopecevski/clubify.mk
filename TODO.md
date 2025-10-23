@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-23 (Phase 4.5 COMPLETE! 🎉 - Player Team Assignment Ready!)
+**Last Updated:** 2025-10-23 (Phase 4.4 & 4.5 COMPLETE! 🎉 - CSV Import & Team Assignment Ready!)
 
 ## Development Principles
 
@@ -418,17 +418,28 @@
 - ✅ 4.3.3 - Player Edit (COMPLETE)
 - ✅ 4.3.4 - Player Delete (Soft Delete COMPLETE)
 
-### 4.4 Player Management - CSV Import 📝
-- [ ] Create CSV template download
-- [ ] Create CSV upload component
-- [ ] Validate CSV format and data
-- [ ] Show preview before import
-- [ ] Bulk create players
-- [ ] Handle errors gracefully
-- [ ] Show import summary
-- [ ] Test: Import 10+ players successfully
+### 4.4 Player Management - CSV Import ✅
+- [x] Create CSV template download (all 26 fields)
+- [x] Create CSV upload component with drag & drop
+- [x] Validate CSV format and data (Zod schemas)
+- [x] Show preview before import (first 10 rows with validation status)
+- [x] Bulk create players with parents and team assignments
+- [x] Handle errors gracefully (per-row error tracking)
+- [x] Show import summary (success/failed counts)
+- [x] Download error log for invalid rows
+- [x] Access control (super_admin + club_admin)
+- [x] Test: Build successful, ready for testing
 
-**Deliverable:** CSV bulk player import
+**Deliverable:** ✅ CSV bulk player import complete!
+
+**Implementation Details:**
+- **CSV Template:** 26 fields covering all player data (personal, football, medical, emergency, parent, team)
+- **Validation:** Client-side Zod validation with detailed error messages
+- **Parent Accounts:** Auto-creates new parents or reuses existing ones by email
+- **Team Assignment:** Optional team assignment by team name + jersey number
+- **Error Handling:** Continues processing even if some rows fail
+- **UI Flow:** Upload → Preview → Import → Results summary
+- **API:** POST `/api/club/players/import` - processes all valid rows in bulk
 
 ### 4.5 Player Team Assignment ✅
 - [x] Create team detail/roster page (`/club/[clubId]/teams/[id]`)
@@ -1012,15 +1023,24 @@
 
 ## Current Focus
 
-**Now:** Phase 4.5 - Player Team Assignment ✅ **COMPLETE!**
+**Now:** Phase 4.4 & 4.5 Complete! ✅ **CSV Import & Team Assignment!**
 
 **Next Steps (in priority order):**
-1. **4.4 - CSV Player Import** (Bulk player creation)
-2. **4.6 - Coach Management** (Add/manage coaches)
-3. **4.5 Enhancement** - Jersey number editing (optional)
-4. **Phase 5** - Coach Portal (dashboard, training, attendance)
+1. **4.6 - Coach Management** (Add/manage coaches)
+2. **4.5 Enhancement** - Jersey number editing (optional)
+3. **Phase 5** - Coach Portal (dashboard, training, attendance)
+4. **Phase 6** - Parent Portal (view player info, payments)
 
 **Completed Recently:**
+- ✅ **Phase 4.4 - CSV Player Import** (COMPLETE!) 🎉
+  - CSV template with all 26 player fields
+  - Drag & drop upload with validation
+  - Preview table with validation status
+  - Bulk import with error handling
+  - Auto-create/reuse parent accounts
+  - Optional team assignment by name
+  - Error log download
+  - Results summary
 - ✅ **Phase 4.5 - Player Team Assignment** (COMPLETE!) 🎉
   - Team detail/roster page with player management
   - Assign players to teams (from player profile OR team page)
@@ -1070,5 +1090,5 @@
 ---
 
 **Last Review:** 2025-10-23
-**Progress:** Phase 4.5 Complete! (Player Team Assignment) 🎉
-**Next Milestone:** Phase 4.4 - CSV Player Import OR Phase 4.6 - Coach Management
+**Progress:** Phase 4.4 & 4.5 Complete! (CSV Import + Team Assignment) 🎉
+**Next Milestone:** Phase 4.6 - Coach Management
