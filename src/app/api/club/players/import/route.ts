@@ -158,24 +158,33 @@ export async function POST(request: Request) {
           throw new Error(`Player exists but has no user account`);
         }
       } else {
-        // Player doesn't exist, create new one
-        const playerPassword = `temp${Math.random().toString(36).slice(2, 10)}!`;
+        // Player doesn't exist, check if auth user exists first
+        const { data: allUsers } = await adminSupabase.rpc("get_users_with_email");
+        const existingAuthUser = allUsers?.find((u: { email: string; id: string }) => u.email === playerEmail);
 
-        const { data: playerAuthData, error: playerAuthError } =
-          await adminSupabase.auth.admin.createUser({
-            email: playerEmail,
-            password: playerPassword,
-            email_confirm: true,
-            user_metadata: {
-              full_name: `${data.first_name} ${data.last_name}`,
-            },
-          });
+        if (existingAuthUser) {
+          // Auth user exists but no player record - create player record only
+          playerUserId = existingAuthUser.id;
+        } else {
+          // Neither auth user nor player exists - create both
+          const playerPassword = `temp${Math.random().toString(36).slice(2, 10)}!`;
 
-        if (playerAuthError || !playerAuthData.user) {
-          throw new Error(`Failed to create player account: ${playerAuthError?.message}`);
+          const { data: playerAuthData, error: playerAuthError } =
+            await adminSupabase.auth.admin.createUser({
+              email: playerEmail,
+              password: playerPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: `${data.first_name} ${data.last_name}`,
+              },
+            });
+
+          if (playerAuthError || !playerAuthData.user) {
+            throw new Error(`Failed to create player account: ${playerAuthError?.message}`);
+          }
+
+          playerUserId = playerAuthData.user.id;
         }
-
-        playerUserId = playerAuthData.user.id;
 
         // 3. Create player record
         const { data: newPlayer, error: playerError } = await adminSupabase
