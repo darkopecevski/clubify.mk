@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-21 (Phase 4.1 COMPLETE! 🎉 - Club Admin Dashboard Ready!)
+**Last Updated:** 2025-10-23 (Phase 4.5 COMPLETE! 🎉 - Player Team Assignment Ready!)
 
 ## Development Principles
 
@@ -430,16 +430,31 @@
 
 **Deliverable:** CSV bulk player import
 
-### 4.5 Player Team Assignment 📝
-- [ ] Create player profile page
-- [ ] Show current team assignments
-- [ ] Add "Assign to Team" functionality
-- [ ] Support multi-team assignment
-- [ ] Set jersey number per team
-- [ ] Remove from team
-- [ ] Test: Assign player to multiple teams
+### 4.5 Player Team Assignment ✅
+- [x] Create team detail/roster page (`/club/[clubId]/teams/[id]`)
+- [x] Show current team roster with player details
+- [x] Add "Assign to Team" functionality (from player profile)
+- [x] Add "Add Players" functionality (bulk assignment from team page)
+- [x] Support multi-team assignment (players can be on multiple teams)
+- [x] Add jersey number column to team_players table (migration)
+- [x] Remove player from team (custom modal on both pages)
+- [x] Replace native confirm dialogs with custom modals
+- [x] API endpoints for assign/remove operations
+- [x] Access control: super_admin, club_admin (coach access pending Phase 5)
+- [x] Test: Assign players to teams, remove from teams
+- [ ] Add jersey number editing functionality (inline or modal-based)
 
-**Deliverable:** Player-team assignment
+**Deliverable:** ✅ Player-team assignment complete!
+
+**Implementation Details:**
+- **From Player Profile:** "Assign to Team" button opens modal with available teams
+- **From Team Page:** "Add Players" button opens bulk selection modal with checkboxes
+- **Remove Operations:** Custom confirmation modals matching design system (no native dialogs)
+- **Database:** `jersey_number` column added with CHECK constraint (1-99)
+- **API Routes:**
+  - POST `/api/club/teams/[teamId]/players` - Assign player to team
+  - DELETE `/api/club/team-players/[teamPlayerId]` - Remove from team
+- **Access Control:** Validates user roles and club membership on both frontend and backend
 
 ### 4.6 Coach Management 📝
 - [ ] Create coaches list page
@@ -997,14 +1012,23 @@
 
 ## Current Focus
 
-**Now:** Phase 4.3 - Player Management CRUD ✅ **COMPLETE!**
+**Now:** Phase 4.5 - Player Team Assignment ✅ **COMPLETE!**
 
 **Next Steps (in priority order):**
 1. **4.4 - CSV Player Import** (Bulk player creation)
-2. **4.5 - Player Team Assignment** (Assign players to teams)
-3. **4.6 - Coach Management** (Add/manage coaches)
+2. **4.6 - Coach Management** (Add/manage coaches)
+3. **4.5 Enhancement** - Jersey number editing (optional)
+4. **Phase 5** - Coach Portal (dashboard, training, attendance)
 
 **Completed Recently:**
+- ✅ **Phase 4.5 - Player Team Assignment** (COMPLETE!) 🎉
+  - Team detail/roster page with player management
+  - Assign players to teams (from player profile OR team page)
+  - Bulk player assignment with checkbox selection
+  - Remove players from teams with custom confirmation modals
+  - Multi-team support (players can be on multiple teams)
+  - Jersey number column added to database
+  - Full access control (super_admin + club_admin)
 - ✅ **Phase 4.3 - Player Management CRUD** (COMPLETE!) 🎉
   - **4.3.1** - Multi-step player creation form with parent account management
   - **4.3.2** - Player profile view with all information display
@@ -1045,6 +1069,6 @@
 
 ---
 
-**Last Review:** 2025-10-22
-**Progress:** Phase 4.3.1 Complete! (Player Creation) 🎉
-**Next Milestone:** Phase 4.3.2 - Player Profile View → Phase 4.3.3 - Edit → Phase 4.3.4 - Delete
+**Last Review:** 2025-10-23
+**Progress:** Phase 4.5 Complete! (Player Team Assignment) 🎉
+**Next Milestone:** Phase 4.4 - CSV Player Import OR Phase 4.6 - Coach Management
