@@ -5,14 +5,14 @@ export const genderEnum = z.enum(["male", "female", "other"]);
 export const positionEnum = z.enum(["goalkeeper", "defender", "midfielder", "forward"]);
 export const dominantFootEnum = z.enum(["left", "right", "both"]);
 export const bloodTypeEnum = z.enum([
-  "a_positive",
-  "a_negative",
-  "b_positive",
-  "b_negative",
-  "ab_positive",
-  "ab_negative",
-  "o_positive",
-  "o_negative",
+  "A+",
+  "A-",
+  "B+",
+  "B-",
+  "AB+",
+  "AB-",
+  "O+",
+  "O-",
 ]);
 export const relationshipEnum = z.enum(["father", "mother", "guardian", "other"]);
 
