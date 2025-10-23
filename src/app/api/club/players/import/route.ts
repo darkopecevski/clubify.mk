@@ -130,107 +130,152 @@ export async function POST(request: Request) {
         });
       }
 
-      // 2. Create player account
+      // 2. Check if player already exists by email
       const playerEmail = `${data.email_prefix}@${club.slug}.clubify.mk`;
-      const playerPassword = `temp${Math.random().toString(36).slice(2, 10)}!`;
 
-      // Check if player email already exists
-      const { data: allPlayersUsers } = await adminSupabase.rpc("get_users_with_email");
-      const existingPlayerUsers = allPlayersUsers?.filter((u: { email: string }) => u.email === playerEmail) || [];
-
-      if (existingPlayerUsers && existingPlayerUsers.length > 0) {
-        results.failed++;
-        results.errors.push(
-          `Row ${row.rowNumber}: Player email ${playerEmail} already exists`
-        );
-        continue;
-      }
-
-      const { data: playerAuthData, error: playerAuthError } =
-        await adminSupabase.auth.admin.createUser({
-          email: playerEmail,
-          password: playerPassword,
-          email_confirm: true,
-          user_metadata: {
-            full_name: `${data.first_name} ${data.last_name}`,
-          },
-        });
-
-      if (playerAuthError || !playerAuthData.user) {
-        throw new Error(`Failed to create player account: ${playerAuthError?.message}`);
-      }
-
-      const playerUserId = playerAuthData.user.id;
-
-      // 3. Create player record
-      const { data: player, error: playerError } = await adminSupabase
+      // @ts-ignore - TypeScript types not updated yet after migration
+      const { data: existingPlayerData } = await adminSupabase
         .from("players")
-        .insert({
+        .select("id, user_id")
+        .eq("email", playerEmail)
+        .eq("club_id", clubId)
+        .maybeSingle();
+
+      let player: { id: string; user_id: string | null };
+      let playerUserId: string;
+
+      // @ts-ignore - TypeScript types not updated yet after migration
+      if (existingPlayerData && existingPlayerData.id) {
+        // Player already exists, use existing player
+        // @ts-ignore
+        player = { id: existingPlayerData.id, user_id: existingPlayerData.user_id };
+        // @ts-ignore
+        playerUserId = existingPlayerData.user_id || "";
+
+        if (!playerUserId) {
+          // Player exists but has no user_id (shouldn't happen, but handle it)
+          throw new Error(`Player exists but has no user account`);
+        }
+      } else {
+        // Player doesn't exist, create new one
+        const playerPassword = `temp${Math.random().toString(36).slice(2, 10)}!`;
+
+        const { data: playerAuthData, error: playerAuthError } =
+          await adminSupabase.auth.admin.createUser({
+            email: playerEmail,
+            password: playerPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: `${data.first_name} ${data.last_name}`,
+            },
+          });
+
+        if (playerAuthError || !playerAuthData.user) {
+          throw new Error(`Failed to create player account: ${playerAuthError?.message}`);
+        }
+
+        playerUserId = playerAuthData.user.id;
+
+        // 3. Create player record
+        const { data: newPlayer, error: playerError } = await adminSupabase
+          .from("players")
+          .insert({
+            user_id: playerUserId,
+            club_id: clubId,
+            first_name: data.first_name!,
+            last_name: data.last_name!,
+            date_of_birth: data.date_of_birth!,
+            gender: data.gender!,
+            nationality: data.nationality!,
+            city: data.city!,
+            address: data.address || null,
+            phone: data.phone || null,
+            email: playerEmail,
+            position: data.position!,
+            dominant_foot: data.dominant_foot!,
+            previous_club: data.previous_club || null,
+            blood_type: data.blood_type || null,
+            allergies: data.allergies || null,
+            medical_conditions: data.medical_conditions || null,
+            medications: data.medications || null,
+            emergency_contact_name: data.emergency_contact_name!,
+            emergency_contact_phone: data.emergency_contact_phone!,
+            emergency_contact_relationship: data.emergency_contact_relationship!,
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (playerError || !newPlayer) {
+          throw new Error(`Failed to create player: ${playerError?.message}`);
+        }
+
+        player = newPlayer;
+      }
+
+      // 4. Link parent to player (check if already exists)
+      const { data: existingParentLink } = await adminSupabase
+        .from("player_parents")
+        .select("id")
+        .eq("player_id", player.id)
+        .eq("parent_user_id", parentUserId)
+        .maybeSingle();
+
+      if (!existingParentLink) {
+        const { error: parentLinkError } = await adminSupabase
+          .from("player_parents")
+          .insert({
+            player_id: player.id,
+            parent_user_id: parentUserId,
+            relationship: data.parent_relationship!,
+          });
+
+        if (parentLinkError) {
+          console.warn(`Failed to link parent to player: ${parentLinkError.message}`);
+        }
+      }
+
+      // 5. Assign player role (check if already exists)
+      const { data: existingPlayerRole } = await adminSupabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", playerUserId)
+        .eq("club_id", clubId)
+        .eq("role", "player")
+        .maybeSingle();
+
+      if (!existingPlayerRole) {
+        await adminSupabase.from("user_roles").insert({
           user_id: playerUserId,
           club_id: clubId,
-          first_name: data.first_name!,
-          last_name: data.last_name!,
-          date_of_birth: data.date_of_birth!,
-          gender: data.gender!,
-          nationality: data.nationality!,
-          city: data.city!,
-          address: data.address || null,
-          phone: data.phone || null,
-          email: playerEmail,
-          position: data.position!,
-          dominant_foot: data.dominant_foot!,
-          previous_club: data.previous_club || null,
-          blood_type: data.blood_type || null,
-          allergies: data.allergies || null,
-          medical_conditions: data.medical_conditions || null,
-          medications: data.medications || null,
-          emergency_contact_name: data.emergency_contact_name!,
-          emergency_contact_phone: data.emergency_contact_phone!,
-          emergency_contact_relationship: data.emergency_contact_relationship!,
-          is_active: true,
-        })
-        .select()
-        .single();
-
-      if (playerError || !player) {
-        throw new Error(`Failed to create player: ${playerError?.message}`);
-      }
-
-      // 4. Link parent to player
-      const { error: parentLinkError } = await adminSupabase
-        .from("player_parents")
-        .insert({
-          player_id: player.id,
-          parent_user_id: parentUserId,
-          relationship: data.parent_relationship!,
+          role: "player",
         });
-
-      if (parentLinkError) {
-        // Don't fail the import if parent link fails (might already exist)
-        console.warn(`Failed to link parent to player: ${parentLinkError.message}`);
       }
-
-      // 5. Assign player role
-      await adminSupabase.from("user_roles").insert({
-        user_id: playerUserId,
-        club_id: clubId,
-        role: "player",
-      });
 
       // 6. Assign to team (if team_name provided)
       if (data.team_name) {
         const teamId = teamMap.get(data.team_name.toLowerCase());
         if (teamId) {
-          const { error: teamError } = await adminSupabase.from("team_players").insert({
-            team_id: teamId,
-            player_id: player.id,
-            jersey_number: data.jersey_number ? parseInt(data.jersey_number) : null,
-            joined_at: new Date().toISOString(),
-            is_active: true,
-          });
+          // Check if player is already assigned to this team
+          const { data: existingTeamAssignment } = await adminSupabase
+            .from("team_players")
+            .select("id")
+            .eq("team_id", teamId)
+            .eq("player_id", player.id)
+            .maybeSingle();
 
-          if (teamError) {
-            console.warn(`Failed to assign player to team: ${teamError.message}`);
+          if (!existingTeamAssignment) {
+            const { error: teamError } = await adminSupabase.from("team_players").insert({
+              team_id: teamId,
+              player_id: player.id,
+              jersey_number: data.jersey_number ? parseInt(data.jersey_number) : null,
+              joined_at: new Date().toISOString(),
+              is_active: true,
+            });
+
+            if (teamError) {
+              console.warn(`Failed to assign player to team: ${teamError.message}`);
+            }
           }
         }
       }

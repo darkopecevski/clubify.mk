@@ -374,6 +374,7 @@
 - [x] Test: Delete player, verify soft delete behavior
 
 **Future Enhancements (Post-CRUD):**
+- [ ] **Add missing fields to player creation form** - Add nationality, city, address, phone, email_prefix, previous_club, medications (to match CSV import fields)
 - [ ] Add ability to link existing users as parents (without creating new account)
 - [ ] Send welcome email to parent (deferred to Phase 9 - Notifications)
 - [ ] Send notification email to existing parent about new child
