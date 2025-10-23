@@ -143,10 +143,14 @@ export async function POST(request: Request) {
       let player: { id: string; user_id: string | null };
       let playerUserId: string;
 
-      if (existingPlayerData && existingPlayerData.id) {
+      // Type assertion needed because TypeScript types not yet updated on Netlify build
+      type PlayerData = { id: string; user_id: string | null };
+      const playerData = existingPlayerData as PlayerData | null;
+
+      if (playerData && playerData.id) {
         // Player already exists, use existing player
-        player = { id: existingPlayerData.id, user_id: existingPlayerData.user_id };
-        playerUserId = existingPlayerData.user_id || "";
+        player = { id: playerData.id, user_id: playerData.user_id };
+        playerUserId = playerData.user_id || "";
 
         if (!playerUserId) {
           // Player exists but has no user_id (shouldn't happen, but handle it)
