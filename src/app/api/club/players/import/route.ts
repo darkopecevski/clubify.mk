@@ -203,14 +203,14 @@ export async function POST(request: Request) {
             emergency_contact_relationship: data.emergency_contact_relationship!,
             is_active: true,
           })
-          .select()
+          .select("id, user_id")
           .single();
 
         if (playerError || !newPlayer) {
           throw new Error(`Failed to create player: ${playerError?.message}`);
         }
 
-        player = newPlayer;
+        player = newPlayer as PlayerData;
       }
 
       // 4. Link parent to player (check if already exists)
