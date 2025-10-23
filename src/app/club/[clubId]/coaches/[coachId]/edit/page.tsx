@@ -55,9 +55,16 @@ export default async function EditCoachPage({
   );
   const email = userWithEmail?.email || "";
 
+  // Flatten the coach data for the form
+  const coachData = {
+    ...coach,
+    email,
+    users: coach.users || { full_name: "", phone: null },
+  };
+
   return (
     <div className="space-y-6">
-      <EditCoachForm clubId={clubId} coach={{ ...coach, email }} />
+      <EditCoachForm clubId={clubId} coach={coachData} />
     </div>
   );
 }

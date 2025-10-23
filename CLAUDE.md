@@ -838,6 +838,172 @@ async function DELETE(req: Request) {
 
 ---
 
+### Phase 4.2: Team Management ✅
+
+**Team CRUD Operations:**
+- Full create, read, update, delete functionality
+- Team list with stats (number of players per team)
+- Team detail page with roster management
+- Add/remove players from teams
+- Native HTML table with gray header background
+- Consistent design pattern across all management pages
+
+**Technical Implementation:**
+- `src/app/club/[clubId]/teams/page.tsx` - Teams list server component
+- `src/app/club/[clubId]/teams/page-client.tsx` - Teams list client component
+- `src/app/club/[clubId]/teams/create/page.tsx` - Create team form
+- `src/app/club/[clubId]/teams/[id]/page-client.tsx` - Team detail with roster
+- `src/app/club/[clubId]/teams/[id]/edit/page.tsx` - Edit team form
+- `src/app/api/club/teams/route.ts` - Create team API
+- `src/app/api/club/teams/[teamId]/route.ts` - Update/delete team API
+- `src/app/api/club/teams/[teamId]/players/route.ts` - Add players to team
+- `src/app/api/club/team-players/[teamPlayerId]/route.ts` - Remove player from team
+
+**Design Consistency:**
+- Full-width forms (no max-width constraints)
+- Green focus states on all inputs
+- Native HTML elements (input, select, textarea)
+- Gray table headers with uppercase text
+- Stat cards with colored icon badges
+- Explicit color classes (no semantic tokens)
+
+---
+
+### Phase 4.3: Player Management ✅
+
+**Player CRUD Operations:**
+- Full create, read, update, delete (soft delete)
+- Player list with search and filtering
+- Comprehensive player profiles (personal, medical, emergency contact info)
+- Parent/guardian relationships
+- Team assignments
+- Multi-step form with validation
+
+**Technical Implementation:**
+- `src/app/club/[clubId]/players/page.tsx` - Players list
+- `src/app/club/[clubId]/players/create/page-client.tsx` - Multi-step create form
+- `src/app/club/[clubId]/players/[playerId]/page-client.tsx` - Player detail
+- `src/app/club/[clubId]/players/[playerId]/edit/page-client.tsx` - Edit form
+- `src/app/api/club/players/route.ts` - Create player API
+- `src/app/api/club/players/[playerId]/route.ts` - Update/delete player API
+
+**Player Form Features:**
+- 3-step wizard: Personal Info → Football Info → Emergency Contact
+- Comprehensive fields: name, DOB, gender, position, dominant foot, jersey number
+- Medical information: blood type, allergies, medical conditions
+- Emergency contact details
+- Form validation with Zod schemas
+- Progress indicator
+
+**Design Pattern:**
+- Matches teams management design exactly
+- Native HTML forms with explicit styling
+- Green focus states throughout
+- Consistent button and input styling
+
+---
+
+### Phase 4.4: CSV Import for Players ✅
+
+**Bulk Player Import:**
+- CSV file upload with drag & drop
+- Template download option
+- Preview and validation before import
+- Field mapping interface
+- Error handling and reporting
+- Smart parent account handling (creates or links existing)
+
+**Technical Implementation:**
+- `src/app/club/[clubId]/players/import/page-client.tsx` - Import UI
+- `src/app/api/club/players/import/route.ts` - Import processing
+- CSV parsing with papaparse
+- Validation before database insertion
+- Transaction support for bulk operations
+
+**CSV Template Fields:**
+- first_name, last_name, date_of_birth, gender
+- position, dominant_foot, jersey_number
+- blood_type, allergies, medical_conditions
+- emergency_contact_name, emergency_contact_phone, emergency_contact_relationship
+- parent_email, parent_name, parent_relationship (optional)
+
+**Features:**
+- Validates all required fields
+- Checks for duplicate players (by name + DOB)
+- Creates parent accounts if email provided
+- Links existing parent accounts by email
+- Atomic operations (all or nothing)
+- Detailed error messages with row numbers
+
+---
+
+### Phase 4.6: Coach Management ✅
+
+**Coach CRUD Operations:**
+- Full create, read, update, delete functionality
+- Coach list with credentials and team assignments
+- Coach profiles with bio and specializations
+- License information (UEFA Pro, A, B, C, Grassroots)
+- Years of experience tracking
+- Smart user account handling (creates or reuses existing)
+
+**Technical Implementation:**
+- `src/app/club/[clubId]/coaches/page.tsx` - Coaches list server component
+- `src/app/club/[clubId]/coaches/page-client.tsx` - Coaches list client component
+- `src/app/club/[clubId]/coaches/create/page.tsx` - Create coach wrapper
+- `src/app/club/[clubId]/coaches/create/create-coach-form.tsx` - Create form
+- `src/app/club/[clubId]/coaches/[coachId]/page.tsx` - Coach profile server component
+- `src/app/club/[clubId]/coaches/[coachId]/page-client.tsx` - Coach profile client
+- `src/app/club/[clubId]/coaches/[coachId]/edit/page.tsx` - Edit wrapper
+- `src/app/club/[clubId]/coaches/[coachId]/edit/edit-coach-form.tsx` - Edit form
+- `src/app/api/club/coaches/route.ts` - Create coach API
+- `src/app/api/club/coaches/[coachId]/route.ts` - Update/delete coach API
+
+**Coach Account Management:**
+- Checks if user exists by email before creating
+- Reuses existing accounts when email matches
+- Creates new auth account with default password: `ClubifyCoach2025!`
+- Auto-assigns coach role to user
+- Email confirmed by default
+- Updates user profile with name and phone
+
+**Coach Form Features:**
+- Two sections: Basic Information + Coaching Credentials
+- Basic info: full name, email, phone, specialization
+- Credentials: license type, license number, years of experience, bio
+- Email cannot be changed after creation (shown as read-only on edit)
+- Form validation with error messages
+- Native HTML elements (input, select, textarea)
+
+**Design Consistency:**
+- Matches teams/players management design exactly
+- Native HTML table with gray header background
+- Stat cards with colored icon badges (blue, purple, green)
+- Full-width forms with back button in header
+- Green focus states and explicit color classes
+- Right-aligned submit button only (no cancel in footer)
+- Coach detail page with 2-column grid layout
+- Team assignments section matching player assignments design
+
+**Coach List Page:**
+- Table columns: Name, Contact, License, Experience, Teams, Status, Actions
+- Total coaches, Licensed coaches, Active coaches stat cards
+- Color-coded role badges for team assignments
+- Edit and delete actions per coach
+- Soft delete (sets is_active = false)
+
+**Coach Detail Page:**
+- Header with title, subtitle, and action buttons
+- Status badge (Active/Inactive)
+- Contact Information card (name, email, phone, specialization)
+- Coaching Credentials card (license type/number, experience, joined date)
+- Biography section (if provided)
+- Team Assignments section with role badges and dates
+- Manage Teams button for assigning coaches to teams
+- Consistent with team/player detail page design
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**
