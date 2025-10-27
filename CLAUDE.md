@@ -1002,6 +1002,18 @@ async function DELETE(req: Request) {
 - Manage Teams button for assigning coaches to teams
 - Consistent with team/player detail page design
 
+**Coach Team Assignment:** ✅
+- Assign teams page (`/club/[clubId]/coaches/[coachId]/assign-teams`)
+- Modal UI for selecting team and coaching role
+- 5 role types: head_coach, assistant_coach, goalkeeper_coach, fitness_coach, other
+- Color-coded role badges (purple, blue, green, orange, gray)
+- API endpoint POST `/api/club/coaches/[coachId]/teams` - Assign coach to team
+- API endpoint DELETE `/api/club/team-coaches/[teamCoachId]` - Remove from team
+- Smart handling: reactivates inactive assignments
+- Soft delete with is_active flag and removed_at date
+- Full validation: team and coach must belong to same club
+- Team detail page shows coaching staff section with clickable coach names
+
 ---
 
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**

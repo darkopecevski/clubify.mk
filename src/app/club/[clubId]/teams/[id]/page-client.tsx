@@ -70,6 +70,9 @@ export default function TeamDetailPage({
   const [showRemovePlayerModal, setShowRemovePlayerModal] = useState(false);
   const [playerToRemove, setPlayerToRemove] = useState<{ id: string; name: string } | null>(null);
   const [removingPlayer, setRemovingPlayer] = useState(false);
+  const [editingJerseyId, setEditingJerseyId] = useState<string | null>(null);
+  const [editingJerseyValue, setEditingJerseyValue] = useState<string>("");
+  const [updatingJersey, setUpdatingJersey] = useState(false);
 
   const canEdit = isSuperAdmin() || isClubAdmin(clubId);
 
@@ -239,6 +242,87 @@ export default function TeamDetailPage({
       age--;
     }
     return age;
+  };
+
+  const handleStartEditJersey = (
+    teamPlayerId: string,
+    currentNumber: number | null
+  ) => {
+    setEditingJerseyId(teamPlayerId);
+    setEditingJerseyValue(currentNumber?.toString() || "");
+  };
+
+  const handleCancelEditJersey = () => {
+    setEditingJerseyId(null);
+    setEditingJerseyValue("");
+  };
+
+  const handleUpdateJersey = async (teamPlayerId: string) => {
+    const jerseyNumber = editingJerseyValue.trim();
+
+    // Validation
+    if (
+      jerseyNumber &&
+      (isNaN(Number(jerseyNumber)) ||
+        Number(jerseyNumber) < 1 ||
+        Number(jerseyNumber) > 99)
+    ) {
+      alert("Jersey number must be between 1 and 99");
+      return;
+    }
+
+    // Check for duplicates
+    if (jerseyNumber) {
+      const duplicate = roster.find(
+        (tp) =>
+          tp.id !== teamPlayerId && tp.jersey_number === Number(jerseyNumber)
+      );
+      if (duplicate) {
+        alert(
+          `Jersey number ${jerseyNumber} is already assigned to ${duplicate.players.first_name} ${duplicate.players.last_name}`
+        );
+        return;
+      }
+    }
+
+    setUpdatingJersey(true);
+
+    try {
+      const res = await fetch(`/api/club/team-players/${teamPlayerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jersey_number: jerseyNumber ? Number(jerseyNumber) : null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update jersey number");
+      }
+
+      // Update local state
+      setRoster((prev) =>
+        prev.map((tp) =>
+          tp.id === teamPlayerId
+            ? {
+                ...tp,
+                jersey_number: jerseyNumber ? Number(jerseyNumber) : null,
+              }
+            : tp
+        )
+      );
+
+      setEditingJerseyId(null);
+      setEditingJerseyValue("");
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Failed to update jersey number"
+      );
+    } finally {
+      setUpdatingJersey(false);
+    }
   };
 
   if (loading) {
@@ -440,7 +524,41 @@ export default function TeamDetailPage({
                       {teamPlayer.players.position || "N/A"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
-                      {teamPlayer.jersey_number || "-"}
+                      {editingJerseyId === teamPlayer.id && canEdit ? (
+                        <input
+                          type="number"
+                          min="1"
+                          max="99"
+                          value={editingJerseyValue}
+                          onChange={(e) => setEditingJerseyValue(e.target.value)}
+                          onBlur={() => handleUpdateJersey(teamPlayer.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter")
+                              handleUpdateJersey(teamPlayer.id);
+                            if (e.key === "Escape") handleCancelEditJersey();
+                          }}
+                          autoFocus
+                          disabled={updatingJersey}
+                          className="w-16 rounded border border-gray-300 px-2 py-1 text-center dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            canEdit &&
+                            handleStartEditJersey(
+                              teamPlayer.id,
+                              teamPlayer.jersey_number
+                            )
+                          }
+                          className={
+                            canEdit
+                              ? "cursor-pointer hover:text-green-600 dark:hover:text-green-400"
+                              : ""
+                          }
+                        >
+                          {teamPlayer.jersey_number || "-"}
+                        </span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {new Date(teamPlayer.joined_at).toLocaleDateString()}
