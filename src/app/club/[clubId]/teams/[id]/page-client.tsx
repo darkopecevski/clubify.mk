@@ -39,6 +39,18 @@ type AvailablePlayer = {
   position: string | null;
 };
 
+type TeamCoach = {
+  id: string;
+  coach_id: string;
+  role: string;
+  coaches: {
+    id: string;
+    users: {
+      full_name: string;
+    } | null;
+  } | null;
+};
+
 export default function TeamDetailPage({
   clubId,
   teamId,
@@ -49,6 +61,7 @@ export default function TeamDetailPage({
   const { isSuperAdmin, isClubAdmin } = useUserRole();
   const [team, setTeam] = useState<Team | null>(null);
   const [roster, setRoster] = useState<TeamPlayer[]>([]);
+  const [coaches, setCoaches] = useState<TeamCoach[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
   const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
@@ -99,6 +112,30 @@ export default function TeamDetailPage({
     } else if (rosterData) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setRoster(rosterData as any);
+    }
+
+    // Fetch coaches
+    const { data: coachesData, error: coachesError } = await supabase
+      .from("team_coaches")
+      .select(`
+        id,
+        coach_id,
+        role,
+        coaches!inner (
+          id,
+          users:user_id (
+            full_name
+          )
+        )
+      `)
+      .eq("team_id", teamId)
+      .eq("is_active", true);
+
+    if (coachesError) {
+      console.error("Error fetching coaches:", coachesError);
+    } else if (coachesData) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setCoaches(coachesData as any);
     }
 
     setLoading(false);
@@ -272,6 +309,61 @@ export default function TeamDetailPage({
           {team.is_active ? "Active" : "Inactive"}
         </span>
       </div>
+
+      {/* Coaches Section */}
+      {coaches.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Coaching Staff
+          </h2>
+          <div className="space-y-2">
+            {coaches.map((teamCoach) => {
+              const formatRoleName = (role: string) => {
+                return role
+                  .split("_")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ");
+              };
+
+              const getRoleBadgeColor = (role: string) => {
+                switch (role) {
+                  case "head_coach":
+                    return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100";
+                  case "assistant_coach":
+                    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
+                  case "goalkeeper_coach":
+                    return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+                  case "fitness_coach":
+                    return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100";
+                  default:
+                    return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
+                }
+              };
+
+              return (
+                <div
+                  key={teamCoach.id}
+                  className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
+                >
+                  <Link
+                    href={`/club/${clubId}/coaches/${teamCoach.coach_id}`}
+                    className="font-medium text-gray-900 hover:text-green-600 dark:text-white dark:hover:text-green-400"
+                  >
+                    {teamCoach.coaches?.users?.full_name || "Unknown Coach"}
+                  </Link>
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeColor(
+                      teamCoach.role
+                    )}`}
+                  >
+                    {formatRoleName(teamCoach.role)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Roster Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
