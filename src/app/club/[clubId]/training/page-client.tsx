@@ -47,12 +47,10 @@ type TrainingSession = {
 };
 
 export default function TrainingListClient({
-  clubId,
   teams,
   upcomingSessions,
   pastSessions,
 }: {
-  clubId: string;
   teams: Team[];
   upcomingSessions: TrainingSession[];
   pastSessions: TrainingSession[];

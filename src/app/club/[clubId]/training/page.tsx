@@ -1,4 +1,3 @@
-import { use } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import TrainingListClient from "./page-client";
@@ -8,7 +7,7 @@ export default async function ClubTrainingPage({
 }: {
   params: Promise<{ clubId: string }>;
 }) {
-  const { clubId } = use(params);
+  const { clubId } = await params;
   const supabase = await createClient();
 
   // Check authentication
@@ -88,7 +87,6 @@ export default async function ClubTrainingPage({
 
   return (
     <TrainingListClient
-      clubId={clubId}
       teams={teams || []}
       upcomingSessions={upcoming}
       pastSessions={past}
