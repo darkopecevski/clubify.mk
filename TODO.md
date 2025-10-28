@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-28 (Phase 5.3.1 My Teams Page - COMPLETE! 🎉)
+**Last Updated:** 2025-10-28 (Phase 5.5 Squad Selection - COMPLETE! 🎉)
 
 ## Development Principles
 
@@ -744,28 +744,67 @@
 
 **Deliverable:** ✅ My Teams overview page for coaches - COMPLETE!
 
-### 5.4 Match Management 📝
-- [ ] Create matches list per team
-- [ ] Create "Schedule Match" form
-- [ ] Select opponent, date, venue
-- [ ] Set match type (friendly, league, tournament)
-- [ ] Cancel/reschedule match
-- [ ] Send notifications
-- [ ] Test: Create match, verify notifications
+### 5.4 Match Management ✅ COMPLETE
+- [x] Create matches list per team
+- [x] Create "Schedule Match" form
+- [x] Select opponent, date, venue
+- [x] Set match type (friendly, league, tournament)
+- [x] Cancel/reschedule match
+- [x] Match detail modal with view/edit/cancel actions
+- [x] Reusable components for coach and club admin portals
+- [x] Club filtering for super admins and club admins
+- [x] Team display format: "Club Name (Team Name)"
+- [ ] Send notifications (deferred to Phase 9)
+- [x] Test: Create/edit/cancel matches ✅
 
-**Deliverable:** Match scheduling
+**Features Implemented:**
+- ✅ Match API endpoints (`/api/matches` GET & POST, `/api/matches/[matchId]` PATCH & DELETE)
+- ✅ Role-based access control (super_admin, club_admin, coach)
+- ✅ Coach matches page (`/coach/matches`)
+- ✅ Club admin matches page (`/club/[clubId]/matches`)
+- ✅ Schedule Match Modal (create new match)
+- ✅ Edit Match Modal (update existing match)
+- ✅ Match Detail Modal (view with edit/cancel actions)
+- ✅ Stats cards (Total, Upcoming, Completed matches)
+- ✅ Team filter dropdown
+- ✅ Upcoming/Past tabs
+- ✅ Status badges (scheduled, completed, cancelled, live)
+- ✅ Soft delete (status = "cancelled")
+- ✅ Club-scoped filtering for admins
 
-### 5.5 Squad Selection 📝
-- [ ] Create squad selection UI
-- [ ] Show team roster
-- [ ] Select players for squad (multi-select)
-- [ ] Designate starting 11
-- [ ] Formation builder (optional MVP)
-- [ ] Save squad
-- [ ] Send notifications to selected players
-- [ ] Test: Select squad, verify notifications
+**Deliverable:** ✅ Match scheduling complete!
 
-**Deliverable:** Squad selection
+### 5.5 Squad Selection ✅ COMPLETE
+- [x] Create squad selection UI
+- [x] Show team roster
+- [x] Select players for squad (multi-select with checkboxes)
+- [x] Designate starting 11 (separate checkbox column)
+- [x] Assign jersey numbers per match
+- [x] Add position override and notes per player
+- [x] Save squad to match_squads table
+- [x] Accessible from Match Detail Modal
+- [x] Works for both coach and club admin portals
+- [ ] Formation builder (deferred - future enhancement)
+- [ ] Send notifications to selected players (deferred to Phase 9)
+- [x] Test: Select squad, save successfully ✅
+
+**Features Implemented:**
+- ✅ Squad Selection API (`/api/matches/[matchId]/squad` GET & POST)
+- ✅ Squad Selection Modal component
+- ✅ Table interface with player roster
+- ✅ Select all / individual player selection
+- ✅ Starting 11 designation (validates count)
+- ✅ Jersey number assignment (1-99)
+- ✅ Position override per match
+- ✅ Notes per player
+- ✅ Visual indicators (selected players highlighted)
+- ✅ Stats bar showing: Total Selected, Starting 11, Subs
+- ✅ Warning when starting 11 ≠ 11 players
+- ✅ Integration with Match Detail Modal (Select Squad button)
+- ✅ Role-based access control (coach, club_admin, super_admin)
+- ✅ Data persistence in match_squads table
+
+**Deliverable:** ✅ Squad selection complete!
 
 ### 5.6 Match Results & Statistics 📝
 - [ ] Create match result entry form

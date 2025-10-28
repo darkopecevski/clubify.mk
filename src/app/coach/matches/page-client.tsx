@@ -14,6 +14,7 @@ import {
 import ScheduleMatchModal from "@/components/matches/ScheduleMatchModal";
 import EditMatchModal from "@/components/matches/EditMatchModal";
 import MatchDetailModal from "@/components/matches/MatchDetailModal";
+import SquadSelectionModal from "@/components/matches/SquadSelectionModal";
 
 type Match = {
   id: string;
@@ -59,6 +60,7 @@ export default function MatchesPageClient() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSquadModal, setShowSquadModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   const [stats, setStats] = useState({
@@ -467,8 +469,26 @@ export default function MatchesPageClient() {
           setShowDetailModal(false);
           setShowEditModal(true);
         }}
+        onSelectSquad={() => {
+          setShowDetailModal(false);
+          setShowSquadModal(true);
+        }}
         onCancel={fetchMatches}
         match={selectedMatch}
+      />
+
+      <SquadSelectionModal
+        isOpen={showSquadModal}
+        onClose={() => {
+          setShowSquadModal(false);
+          setSelectedMatch(null);
+        }}
+        onSuccess={() => {
+          setShowSquadModal(false);
+          fetchMatches();
+        }}
+        matchId={selectedMatch?.id || ""}
+        teamId={selectedMatch?.home_team_id || ""}
       />
     </div>
   );
