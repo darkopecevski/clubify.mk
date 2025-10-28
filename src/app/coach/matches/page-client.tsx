@@ -9,10 +9,11 @@ import {
   Plus,
   Loader2,
   AlertCircle,
-  Clock,
   Edit2,
-  X,
 } from "lucide-react";
+import ScheduleMatchModal from "@/components/matches/ScheduleMatchModal";
+import EditMatchModal from "@/components/matches/EditMatchModal";
+import MatchDetailModal from "@/components/matches/MatchDetailModal";
 
 type Match = {
   id: string;
@@ -443,25 +444,37 @@ export default function MatchesPageClient() {
         )}
       </div>
 
-      {/* TODO: Add modals for Schedule, Edit, and Detail */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="rounded-lg bg-white p-6 dark:bg-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Schedule Match
-            </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Coming soon...
-            </p>
-            <button
-              onClick={() => setShowScheduleModal(false)}
-              className="mt-4 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      <ScheduleMatchModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSuccess={fetchMatches}
+        teams={teams}
+      />
+
+      <EditMatchModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedMatch(null);
+        }}
+        onSuccess={fetchMatches}
+        match={selectedMatch}
+      />
+
+      <MatchDetailModal
+        isOpen={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedMatch(null);
+        }}
+        onEdit={() => {
+          setShowDetailModal(false);
+          setShowEditModal(true);
+        }}
+        onCancel={fetchMatches}
+        match={selectedMatch}
+      />
     </div>
   );
 }
