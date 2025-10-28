@@ -510,41 +510,196 @@
 
 ---
 
-## Phase 5: Coach Portal
+## Phase 5: Coach Portal ⏳
 
-### 5.1 Coach Dashboard 📝
-- [ ] Create coach layout
-- [ ] Create dashboard overview
-- [ ] Show assigned teams
-- [ ] Show upcoming training sessions and matches
-- [ ] Show attendance summary
-- [ ] Test: Coach sees only their teams
+### 5.1 Coach Dashboard ✅
+- [x] Create coach layout with sidebar
+- [x] Create dashboard overview with stats
+- [x] Show assigned teams (filtered by coach role)
+- [x] Show upcoming training sessions (next 7 days)
+- [x] Show upcoming matches (next 7 days)
+- [x] Show attendance summary (last 30 days)
+- [x] Fix role-based filtering (use coach_id not user_id)
+- [x] Test: Coach sees only their teams ✅
 
-**Deliverable:** Coach dashboard
+**Deliverable:** ✅ Coach dashboard complete
 
-### 5.2 Training Session Management 📝
-- [ ] Create training sessions list per team
-- [ ] Create "Schedule Training" form (one-time)
-- [ ] Create "Recurring Training" form
-- [ ] Generate recurring session instances
-- [ ] Cancel training session
-- [ ] Reschedule training session
-- [ ] Send notifications to players/parents
-- [ ] Test: Create recurring training, verify instances
+### 5.2 Training Session Management (List View) ✅
+- [x] Create training sessions list page
+- [x] Create "Schedule Training" form (one-time session)
+- [x] Create "Recurring Training" form with day selector
+- [x] Generate recurring session instances from pattern
+- [x] Edit training session (custom modal)
+- [x] Delete training session (custom modal)
+- [x] Fix schema alignment (session_date, duration_minutes)
+- [x] API endpoints (POST, PATCH, DELETE, recurring)
+- [x] Test: Create/edit/delete sessions ✅
 
-**Deliverable:** Training session scheduling
+**Deliverable:** ✅ Training session CRUD complete
 
-### 5.3 Attendance Tracking 📝
-- [ ] Create attendance marking UI (per session)
-- [ ] Show team roster with checkboxes
-- [ ] Mark: Present, Absent, Excused, Late
-- [ ] Add notes per player
-- [ ] Save attendance
-- [ ] Show attendance history
-- [ ] Calculate attendance percentage
-- [ ] Test: Mark attendance, verify calculations
+### 5.2.1 Training Session Management - Calendar View & Recurring Improvements ⏳
+**Implementation Plan (Option C - Hybrid Approach):**
 
-**Deliverable:** Attendance tracking
+#### Database Changes
+- [ ] Add `is_override` boolean column to `training_sessions` table
+  - Default: false
+  - True when session is manually edited (breaks from recurring pattern)
+  - Migration: `20251028000000_add_is_override_to_training_sessions.sql`
+
+#### Calendar View Component
+- [ ] Create `/src/components/coach/TrainingCalendar.tsx` - Main wrapper
+- [ ] Create `/src/components/coach/DayView.tsx` - Hour-by-hour schedule
+- [ ] Create `/src/components/coach/WeekView.tsx` - 7-column grid (Google Calendar style)
+- [ ] Create `/src/components/coach/MonthView.tsx` - Traditional month calendar
+- [ ] Add view toggle buttons: Day | Week | Month
+- [ ] Add navigation: ← Today → buttons
+- [ ] Add date range display (e.g., "Nov 25 - Dec 1, 2024")
+- [ ] Color-code sessions by team
+- [ ] Show session details on hover
+- [ ] Click session → detail modal
+- [ ] Click empty slot → create session modal
+
+#### Session Interaction Modals
+- [ ] **Session Detail Modal:**
+  - Display full session info
+  - Buttons: Edit | Delete | View Attendance | Close
+  - Show recurring indicator (↻ icon) if part of pattern
+
+- [ ] **Edit Session Modal (for recurring sessions):**
+  - Radio buttons:
+    - ○ Edit only this session (Nov 28)
+    - ○ Edit all future sessions in this pattern
+  - Then show edit form
+  - "Single" mode: sets `is_override = true`
+  - "All future" mode: updates pattern, regenerates non-override sessions
+
+- [ ] **Delete Confirmation Modal (for recurring sessions):**
+  - Radio buttons:
+    - ○ Delete only this session
+    - ○ Delete all future sessions in this pattern
+  - Confirm/Cancel buttons
+  - "Single" mode: soft delete session
+  - "All future" mode: deletes pattern and future non-override sessions
+
+#### API Updates
+- [ ] Update PATCH `/api/coach/training/[sessionId]/route.ts`
+  - Add `edit_mode` parameter: "single" | "all_future"
+  - Implement single edit logic (set is_override = true)
+  - Implement pattern update logic (update recurrence, delete future non-override, regenerate)
+
+- [ ] Update DELETE `/api/coach/training/[sessionId]/route.ts`
+  - Add `delete_mode` parameter: "single" | "all_future"
+  - Implement single delete
+  - Implement pattern delete (remove recurrence + future sessions)
+
+- [ ] Create PATCH `/api/coach/training/recurring/[recurrenceId]/route.ts`
+  - Direct pattern update endpoint
+  - Used from recurring patterns management page
+
+#### Recurring Patterns Management Page
+- [ ] Create `/src/app/coach/training/patterns/page.tsx` - Server component
+- [ ] Create `/src/app/coach/training/patterns/page-client.tsx` - Client component
+- [ ] List all active recurring patterns for coach's teams
+- [ ] Show: Team, Days (Mon/Wed/Fri), Time (18:00-19:30), Location
+- [ ] Actions per pattern:
+  - Edit Pattern (updates all future non-override sessions)
+  - Delete Pattern (removes pattern + future sessions)
+  - Extend (generate more sessions to new date)
+- [ ] Navigation link from main training page
+
+#### Integration & Polish
+- [ ] Update `/src/app/coach/training/page-client.tsx`
+  - Replace list view with calendar as default
+  - Keep list view as optional tab (Calendar | List)
+  - Integrate all new modals
+  - Add "Manage Recurring Patterns" link
+
+- [ ] Visual indicators:
+  - ↻ icon for recurring sessions
+  - Show pattern summary on hover: "Part of Mon/Wed/Fri 18:00-19:30 pattern"
+  - Different styling for override sessions (dimmed recurring icon)
+
+#### Testing
+- [x] Test calendar views (day/week/month) - Basic rendering
+- [ ] Test click interactions (view, edit, delete from calendar)
+- [ ] Test single vs all occurrences editing
+- [ ] Test override behavior (edited sessions stay when pattern changes)
+- [ ] Test pattern management page (edit/delete/extend)
+- [ ] Test with multiple teams and overlapping sessions
+- [ ] Test responsive design (mobile calendar view)
+
+**Progress Update (2025-10-28 - COMPLETED ✅):**
+- ✅ Database migration complete (`is_override` column added)
+- ✅ Calendar components created (DayView, WeekView, MonthView, TrainingCalendar)
+- ✅ Calendar is default view with list view toggle
+- ✅ Session Detail Modal implemented
+- ✅ Delete Modal enhanced with single/all future options
+- ✅ DELETE API endpoint updated with `delete_mode` parameter
+- ✅ Timezone issues fixed (manual date formatting)
+- ✅ Visual distinction for recurring sessions (ring borders)
+- ✅ Delete all future sessions works correctly (finds all patterns in group)
+
+**Completed Features:**
+- ✅ Google Calendar-style interface (Day/Week/Month views)
+- ✅ Create recurring training patterns (select days, set schedule)
+- ✅ Session Detail Modal with full info and action buttons
+- ✅ Delete single session or all future sessions in pattern
+- ✅ Visual indicators for recurring sessions (ring border + ↻ icon)
+- ✅ Timezone-safe date handling across all calendar views
+- ✅ Color-coded sessions by team (8-color palette)
+
+**Remaining Work (Future Enhancements):**
+- [ ] Enhance Edit Modal for Recurring Sessions
+  - Add radio buttons when editing recurring session:
+    - ○ Edit only this session (DATE)
+    - ○ Edit all future sessions in this pattern
+  - Pass `edit_mode` parameter to API
+  - Update PATCH endpoint logic
+
+- [ ] Recurring Patterns Management Page
+  - Create `/coach/training/patterns` page
+  - List all active recurring patterns
+  - Edit/Delete/Extend patterns
+  - Navigation link from main training page
+
+**Deliverable:** ✅ Google Calendar-style training management with smart recurring session handling
+
+**Technical Notes:**
+- **is_override = true:** Session has been manually edited, won't be affected by pattern updates
+- **is_override = false:** Session is auto-generated from pattern, will be regenerated if pattern changes
+- **Pattern update flow:** Updates `training_recurrences`, deletes future non-override sessions, regenerates from today
+- **Calendar rendering:** Fetch sessions for current view range (month ± 1 week for smooth navigation)
+- **Color coding:** Each team gets a distinct background color (from predefined palette)
+
+### 5.3 Attendance Tracking ✅ COMPLETE
+- [x] Create attendance marking UI (per session)
+- [x] Show team roster with checkboxes
+- [x] Mark: Present, Absent, Excused, Late, Injured
+- [x] Add notes per player
+- [x] Save attendance
+- [x] Show attendance history
+- [x] Calculate attendance percentage
+- [x] Attendance overview page with statistics
+- [x] Team and date range filters
+- [x] Color-coded attendance percentages
+
+**Deliverable:** ✅ Attendance tracking complete
+
+**Completed Features:**
+- ✅ Mark attendance from Session Detail Modal (calendar view)
+- ✅ Mark attendance from list view (action button)
+- ✅ Attendance modal with team roster table
+- ✅ 5 status options: Present, Absent, Late, Excused, Injured
+- ✅ Arrival time field for "Late" status
+- ✅ Optional notes per player
+- ✅ Upsert logic (update existing, create new)
+- ✅ Custom success toast notification
+- ✅ Attendance overview page (`/coach/attendance`)
+- ✅ Statistics API endpoint with filters
+- ✅ Per-player attendance statistics
+- ✅ Overall statistics (total sessions, avg attendance, perfect/low counts)
+- ✅ Color-coded percentages: Green (≥90%), Yellow (75-89%), Orange (60-74%), Red (<60%)
+- ✅ Team and date range filters
 
 ### 5.4 Match Management 📝
 - [ ] Create matches list per team
@@ -1053,15 +1208,32 @@
 
 ## Current Focus
 
-**Now:** Phase 4.6 FULLY COMPLETE! ✅ **Coach Management with Team Assignments!**
+**Now:** Phase 5.4 📝 **Match Management**
 
 **Next Steps (in priority order):**
-1. **4.5 Enhancement** - Jersey number editing (inline or modal-based)
-2. **Phase 5** - Coach Portal (dashboard, training sessions, attendance tracking, matches)
-3. **Phase 6** - Parent Portal (view player info, payments, schedules)
-4. **Phase 8** - Payment Management (subscription fees, discounts, payment tracking)
+1. **Phase 5.4** - Match Management (schedule matches, opponents, venues)
+2. **Phase 5.5** - Squad Selection (select players for matches)
+3. **Phase 5.6** - Match Results & Statistics (record scores, player stats)
+4. **5.2.1 Enhancement** - Edit recurring sessions (single vs all occurrences)
+5. **5.2.1 Enhancement** - Recurring patterns management page
+6. **4.5 Enhancement** - Jersey number editing (deferred, lower priority)
+7. **Phase 6** - Parent Portal (view player info, payments, schedules)
+7. **Phase 8** - Payment Management (subscription fees, discounts, payment tracking)
 
 **Completed Recently:**
+- ✅ **Phase 5.3 - Attendance Tracking** (FULLY COMPLETE!) 🎉
+  - Mark attendance from calendar and list view
+  - Attendance overview page with statistics
+  - Color-coded percentage badges
+  - Team and date range filters
+  - Dashboard integration with correct calculations
+- ✅ **Phase 5.2.1 - Training Calendar View** (FULLY COMPLETE!) 🎉
+  - Google Calendar-style interface (Day/Week/Month views)
+  - Recurring training sessions
+  - Session Detail Modal
+  - Delete with single/all future options
+  - Visual distinction for recurring sessions
+  - Timezone-safe date handling
 - ✅ **Phase 4.6 - Coach Management** (FULLY COMPLETE!) 🎉
   - **CRUD Operations:**
     - Coaches list page with stats (Total, Licensed, Active coaches)

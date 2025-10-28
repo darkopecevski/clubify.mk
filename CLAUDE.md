@@ -1016,6 +1016,119 @@ async function DELETE(req: Request) {
 
 ---
 
+## Phase 5: Coach Portal - Training Management (✅ Complete)
+
+### 5.2.1 Training Calendar with Recurring Sessions ✅
+
+**Google Calendar-Style Interface:**
+- Three view modes: Day, Week, Month
+- Navigation controls: ← Today → buttons
+- Date range display (e.g., "Nov 25 - Dec 1, 2024")
+- View toggle buttons with active state highlighting
+- Color-coded sessions by team (8-color palette)
+
+**Calendar Components:**
+- `src/components/coach/TrainingCalendar.tsx` - Main calendar wrapper with view switching
+- `src/components/coach/DayView.tsx` - Hour-by-hour single day schedule (7 AM - 9 PM)
+- `src/components/coach/WeekView.tsx` - 7-column weekly grid with time slots
+- `src/components/coach/MonthView.tsx` - Traditional month calendar with event badges
+
+**Recurring Training Sessions:**
+- Create recurring patterns: select days of week (Mon/Wed/Fri, etc.)
+- Set time, duration, location, and generate-until date
+- Database: `training_recurrences` table stores one record per day of week
+- Auto-generates `training_sessions` from pattern
+- Each session links to pattern via `recurrence_id`
+
+**Session Management:**
+- **Session Detail Modal**: Click session → view full details with Edit/Delete buttons
+- **Delete Options**:
+  - Delete only this session (single mode)
+  - Delete all future sessions in pattern (all_future mode)
+- **Visual Distinction**: Recurring sessions have subtle ring border
+- API endpoint: DELETE `/api/coach/training/[sessionId]` with `delete_mode` parameter
+
+**Timezone Handling:**
+- Manual date formatting to avoid `.toISOString()` timezone conversion
+- All dates reset to `00:00:00.000` with `setHours(0, 0, 0, 0)`
+- Consistent date format: `YYYY-MM-DD` across calendar views
+- Fixed in: MonthView, WeekView, DayView, TrainingCalendar, recurring API
+
+**Delete Logic:**
+- Single mode: Deletes only the selected session
+- All future mode:
+  1. Finds all recurrence patterns with same team/time/duration/location
+  2. Deletes all those patterns (e.g., Mon/Wed/Fri group)
+  3. Deletes all future sessions linked to those patterns
+
+**Key Technical Details:**
+- `is_override` column tracks manually edited sessions
+- Recurring sessions show ↻ icon in calendar
+- Delete modal shows radio buttons for recurring sessions only
+- Database migration: `20251028000000_add_is_override_to_training_sessions.sql`
+
+**API Endpoints:**
+- POST `/api/coach/training/recurring` - Create recurring pattern + generate sessions
+- DELETE `/api/coach/training/[sessionId]` - Delete with single/all_future modes
+- PATCH `/api/coach/training/[sessionId]` - Update single session
+
+**Future Enhancements (TODO):**
+- Edit modal with "single vs all future" options
+- Recurring patterns management page
+- Match integration with different visual styling
+
+---
+
+## Phase 5: Coach Portal - Attendance Tracking (✅ Complete)
+
+### 5.3 Attendance Tracking ✅
+
+**Mark Attendance Feature:**
+- Attendance modal accessible from Session Detail Modal or list view action button
+- Team roster table with all players (jersey number, name)
+- 5 status options: Present, Absent, Late, Excused, Injured
+- Arrival time field (enabled only for "Late" status)
+- Optional notes per player
+- Upsert logic (updates existing records, creates new ones)
+- Custom success toast notification (no native alerts)
+
+**Attendance Overview Page** (`/coach/attendance`):
+- Statistics cards: Total Sessions, Avg Attendance, Perfect Attendance (100%), Low Attendance (<75%)
+- Filters: Team dropdown (all/specific), Date range (from/to)
+- Player statistics table with attendance breakdown
+- Color-coded percentage badges:
+  - Green ≥90% (Excellent)
+  - Yellow 75-89% (Good)
+  - Orange 60-74% (Fair)
+  - Red <60% (Poor)
+- Real-time filtering and data fetching
+
+**API Endpoints:**
+- POST `/api/coach/training/[sessionId]/attendance` - Save/update attendance for session
+- GET `/api/coach/training/[sessionId]/attendance` - Get attendance for session with team roster
+- GET `/api/coach/attendance/statistics` - Get attendance statistics with team/date filters
+
+**Dashboard Integration:**
+- Fixed coach dashboard attendance calculation
+- Now includes both "present" and "late" statuses
+- Shows last 30 days attendance percentage
+- Matches Attendance page calculation formula
+
+**Technical Details:**
+- Attendance percentage formula: `(present + late) / total * 100`
+- Permission validation: super_admin, club_admin, or assigned coach only
+- Upsert with conflict resolution on `(training_session_id, player_id)`
+- Dark mode support throughout
+
+**Components Created:**
+- `/src/app/coach/attendance/page.tsx` - Server component
+- `/src/app/coach/attendance/page-client.tsx` - Client component with UI
+- `/src/app/api/coach/training/[sessionId]/attendance/route.ts` - Mark attendance API
+- `/src/app/api/coach/attendance/statistics/route.ts` - Statistics API
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**
+- Add to memory. After each phase is finished update the TODO.md
