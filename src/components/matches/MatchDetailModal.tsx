@@ -133,21 +133,11 @@ export default function MatchDetailModal({
           {/* Match Info */}
           <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-900/50">
             <div className="text-center">
-              {match.teams.clubs?.name && (
-                <div className="mb-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {match.teams.clubs.name}
-                </div>
-              )}
               <div className="flex items-center justify-center gap-6">
                 <div className="flex-1 text-right">
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {match.teams.name}
+                    {match.teams.clubs?.name} ({match.teams.name})
                   </div>
-                  {match.teams.name !== match.teams.age_group && (
-                    <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {match.teams.age_group}
-                    </div>
-                  )}
                 </div>
                 <div className="flex flex-col items-center">
                   <div className="text-3xl font-bold text-gray-400">vs</div>

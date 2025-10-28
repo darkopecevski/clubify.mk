@@ -378,13 +378,8 @@ export default function MatchesPageClient({ clubId }: { clubId: string }) {
 
                     {/* Team */}
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
-                          {match.teams.name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {match.teams.age_group}
-                        </div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {match.teams.clubs?.name} ({match.teams.name})
                       </div>
                     </td>
 

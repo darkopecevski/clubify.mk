@@ -50,6 +50,10 @@ type Match = {
     id: string;
     name: string;
     age_group: string | null;
+    clubs: {
+      id: string;
+      name: string;
+    } | null;
   };
 };
 
@@ -338,7 +342,7 @@ export default function CoachDashboardClient({
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium text-gray-900 dark:text-white">
-                          {match.teams.name} vs {match.away_team_name || "TBD"}
+                          {match.teams.clubs?.name} ({match.teams.name}) vs {match.away_team_name || "TBD"}
                         </h3>
                         {match.competition && (
                           <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">

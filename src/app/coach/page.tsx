@@ -206,7 +206,11 @@ export default async function CoachDashboardPage() {
       teams:home_team_id (
         id,
         name,
-        age_group
+        age_group,
+        clubs:club_id (
+          id,
+          name
+        )
       )
     `
     )
