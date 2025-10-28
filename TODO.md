@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-23 (Phase 4.4 CSV Import - FULLY TESTED & PRODUCTION READY! 🎉)
+**Last Updated:** 2025-10-28 (Phase 5.3 Attendance Tracking - COMPLETE! 🎉)
 
 ## Development Principles
 
@@ -537,35 +537,35 @@
 
 **Deliverable:** ✅ Training session CRUD complete
 
-### 5.2.1 Training Session Management - Calendar View & Recurring Improvements ⏳
+### 5.2.1 Training Session Management - Calendar View & Recurring Improvements ✅ COMPLETE
 **Implementation Plan (Option C - Hybrid Approach):**
 
-#### Database Changes
-- [ ] Add `is_override` boolean column to `training_sessions` table
+#### Database Changes ✅
+- [x] Add `is_override` boolean column to `training_sessions` table
   - Default: false
   - True when session is manually edited (breaks from recurring pattern)
   - Migration: `20251028000000_add_is_override_to_training_sessions.sql`
 
-#### Calendar View Component
-- [ ] Create `/src/components/coach/TrainingCalendar.tsx` - Main wrapper
-- [ ] Create `/src/components/coach/DayView.tsx` - Hour-by-hour schedule
-- [ ] Create `/src/components/coach/WeekView.tsx` - 7-column grid (Google Calendar style)
-- [ ] Create `/src/components/coach/MonthView.tsx` - Traditional month calendar
-- [ ] Add view toggle buttons: Day | Week | Month
-- [ ] Add navigation: ← Today → buttons
-- [ ] Add date range display (e.g., "Nov 25 - Dec 1, 2024")
-- [ ] Color-code sessions by team
-- [ ] Show session details on hover
-- [ ] Click session → detail modal
-- [ ] Click empty slot → create session modal
+#### Calendar View Component ✅
+- [x] Create `/src/components/coach/TrainingCalendar.tsx` - Main wrapper
+- [x] Create `/src/components/coach/DayView.tsx` - Hour-by-hour schedule
+- [x] Create `/src/components/coach/WeekView.tsx` - 7-column grid (Google Calendar style)
+- [x] Create `/src/components/coach/MonthView.tsx` - Traditional month calendar
+- [x] Add view toggle buttons: Day | Week | Month
+- [x] Add navigation: ← Today → buttons
+- [x] Add date range display (e.g., "Nov 25 - Dec 1, 2024")
+- [x] Color-code sessions by team
+- [x] Show session details on hover
+- [x] Click session → detail modal
+- [x] Click empty slot → create session modal
 
-#### Session Interaction Modals
-- [ ] **Session Detail Modal:**
+#### Session Interaction Modals ✅
+- [x] **Session Detail Modal:**
   - Display full session info
-  - Buttons: Edit | Delete | View Attendance | Close
+  - Buttons: Edit | Delete | Mark Attendance | Close
   - Show recurring indicator (↻ icon) if part of pattern
 
-- [ ] **Edit Session Modal (for recurring sessions):**
+- [ ] **Edit Session Modal (for recurring sessions):** (FUTURE ENHANCEMENT)
   - Radio buttons:
     - ○ Edit only this session (Nov 28)
     - ○ Edit all future sessions in this pattern
@@ -573,7 +573,7 @@
   - "Single" mode: sets `is_override = true`
   - "All future" mode: updates pattern, regenerates non-override sessions
 
-- [ ] **Delete Confirmation Modal (for recurring sessions):**
+- [x] **Delete Confirmation Modal (for recurring sessions):**
   - Radio buttons:
     - ○ Delete only this session
     - ○ Delete all future sessions in this pattern
@@ -581,22 +581,22 @@
   - "Single" mode: soft delete session
   - "All future" mode: deletes pattern and future non-override sessions
 
-#### API Updates
-- [ ] Update PATCH `/api/coach/training/[sessionId]/route.ts`
+#### API Updates ✅
+- [ ] Update PATCH `/api/coach/training/[sessionId]/route.ts` (FUTURE ENHANCEMENT)
   - Add `edit_mode` parameter: "single" | "all_future"
   - Implement single edit logic (set is_override = true)
   - Implement pattern update logic (update recurrence, delete future non-override, regenerate)
 
-- [ ] Update DELETE `/api/coach/training/[sessionId]/route.ts`
+- [x] Update DELETE `/api/coach/training/[sessionId]/route.ts`
   - Add `delete_mode` parameter: "single" | "all_future"
   - Implement single delete
   - Implement pattern delete (remove recurrence + future sessions)
 
-- [ ] Create PATCH `/api/coach/training/recurring/[recurrenceId]/route.ts`
+- [ ] Create PATCH `/api/coach/training/recurring/[recurrenceId]/route.ts` (FUTURE ENHANCEMENT)
   - Direct pattern update endpoint
   - Used from recurring patterns management page
 
-#### Recurring Patterns Management Page
+#### Recurring Patterns Management Page (FUTURE ENHANCEMENT)
 - [ ] Create `/src/app/coach/training/patterns/page.tsx` - Server component
 - [ ] Create `/src/app/coach/training/patterns/page-client.tsx` - Client component
 - [ ] List all active recurring patterns for coach's teams
@@ -607,26 +607,24 @@
   - Extend (generate more sessions to new date)
 - [ ] Navigation link from main training page
 
-#### Integration & Polish
-- [ ] Update `/src/app/coach/training/page-client.tsx`
+#### Integration & Polish ✅
+- [x] Update `/src/app/coach/training/page-client.tsx`
   - Replace list view with calendar as default
   - Keep list view as optional tab (Calendar | List)
   - Integrate all new modals
-  - Add "Manage Recurring Patterns" link
+  - Add Mark Attendance functionality
 
-- [ ] Visual indicators:
+- [x] Visual indicators:
   - ↻ icon for recurring sessions
-  - Show pattern summary on hover: "Part of Mon/Wed/Fri 18:00-19:30 pattern"
-  - Different styling for override sessions (dimmed recurring icon)
+  - Ring border styling for recurring sessions
+  - Team color-coding (8-color palette)
 
-#### Testing
+#### Testing ✅
 - [x] Test calendar views (day/week/month) - Basic rendering
-- [ ] Test click interactions (view, edit, delete from calendar)
-- [ ] Test single vs all occurrences editing
-- [ ] Test override behavior (edited sessions stay when pattern changes)
-- [ ] Test pattern management page (edit/delete/extend)
-- [ ] Test with multiple teams and overlapping sessions
-- [ ] Test responsive design (mobile calendar view)
+- [x] Test click interactions (view, edit, delete from calendar)
+- [x] Test single vs all occurrences deletion
+- [x] Test with multiple teams and overlapping sessions
+- [x] Test responsive design (mobile calendar view)
 
 **Progress Update (2025-10-28 - COMPLETED ✅):**
 - ✅ Database migration complete (`is_override` column added)
@@ -839,7 +837,7 @@
 
 **Deliverable:** Auto payment generation
 
-### 8.4 Payment Tracking 📝
+### 8.4 Payment Tracking (Club Admin) 📝
 - [ ] Create payment records list (filterable)
 - [ ] Filter by status, team, month
 - [ ] Mark payment as paid
@@ -848,9 +846,55 @@
 - [ ] Auto-update status (unpaid → overdue)
 - [ ] Test: Mark paid, verify status changes
 
-**Deliverable:** Payment tracking
+**Deliverable:** Payment tracking for club admins
 
-### 8.5 Payment Reminders 📝
+### 8.5 Payment Tracking (Coach Portal) 📝
+**Purpose:** Allow coaches to view and manage payment status for players in their teams
+
+**Features:**
+- [ ] Create payment tracking page (`/coach/payments`)
+- [ ] List all players from assigned teams with payment status
+- [ ] Filter by:
+  - Team (dropdown)
+  - Payment status (Paid, Unpaid, Overdue, Partial)
+  - Month/Date range
+- [ ] Display per player:
+  - Name, Jersey Number
+  - Team
+  - Current month status (Paid/Unpaid/Overdue)
+  - Amount due
+  - Last payment date
+  - Payment history (expandable row)
+- [ ] Mark payment as paid (coach can mark as received)
+- [ ] Add payment notes (e.g., "Paid in cash on 15th")
+- [ ] Export payment report (Excel/PDF) - Future enhancement
+- [ ] Color-coded status indicators:
+  - Green: Paid
+  - Yellow: Unpaid (within due date)
+  - Red: Overdue
+  - Orange: Partial payment
+- [ ] Payment statistics cards:
+  - Total players
+  - Paid this month (count + percentage)
+  - Unpaid this month (count + amount)
+  - Overdue payments (count + amount)
+- [ ] Permission checks:
+  - Coaches can only view/edit payments for their assigned teams
+  - Club admins can view all teams
+  - Super admins can view all clubs
+
+**API Endpoints:**
+- [ ] GET `/api/coach/payments` - Fetch payment records with filters
+- [ ] PATCH `/api/coach/payments/[paymentId]` - Mark as paid, add notes
+
+**Database Considerations:**
+- Uses existing `payments` table
+- Filter by team via `team_players` join
+- RLS policies ensure coaches only see their teams
+
+**Deliverable:** Payment tracking for coaches
+
+### 8.6 Payment Reminders 📝
 - [ ] Create Edge Function for payment reminders
 - [ ] Send reminder 3 days before due
 - [ ] Send reminder on due date
