@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// PATCH /api/matches/[matchId] - Update a match
-export async function PATCH(
+// GET /api/matches/[matchId] - Get single match details
+export async function GET(
   request: Request,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
@@ -19,15 +19,113 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check user roles
+    // Fetch match with team details
+    const { data: match, error } = await supabase
+      .from("matches")
+      .select(
+        `
+        id,
+        home_team_id,
+        away_team_id,
+        away_team_name,
+        match_date,
+        start_time,
+        location,
+        competition,
+        status,
+        home_score,
+        away_score,
+        notes,
+        created_at,
+        teams:home_team_id (
+          id,
+          name,
+          age_group,
+          clubs:club_id (
+            id,
+            name
+          )
+        )
+      `
+      )
+      .eq("id", matchId)
+      .single();
+
+    if (error || !match) {
+      console.error("Error fetching match:", error);
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check if user has access to this match
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role, club_id")
-      .eq("user_id", user.id)
-      .in("role", ["super_admin", "club_admin", "coach"]);
+      .eq("user_id", user.id);
 
-    if (!roles || roles.length === 0) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const isSuperAdmin = roles?.some((r) => r.role === "super_admin");
+
+    // Get the club_id from the team
+    const clubId = match.teams?.clubs?.id;
+
+    if (!isSuperAdmin) {
+      const isClubAdmin = roles?.some(
+        (r) => r.role === "club_admin" && r.club_id === clubId
+      );
+
+      let isCoach = false;
+      if (!isClubAdmin) {
+        const { data: coach } = await supabase
+          .from("coaches")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (coach) {
+          const { data: assignment } = await supabase
+            .from("team_coaches")
+            .select("id")
+            .eq("coach_id", coach.id)
+            .eq("team_id", match.home_team_id)
+            .eq("is_active", true)
+            .single();
+
+          isCoach = !!assignment;
+        }
+      }
+
+      if (!isClubAdmin && !isCoach) {
+        return NextResponse.json(
+          { error: "You do not have access to this match" },
+          { status: 403 }
+        );
+      }
+    }
+
+    return NextResponse.json({ match });
+  } catch (error) {
+    console.error("Error in match route:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/matches/[matchId] - Update match
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ matchId: string }> }
+) {
+  try {
+    const { matchId } = await params;
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -37,41 +135,47 @@ export async function PATCH(
       start_time,
       location,
       competition,
+      home_score,
+      away_score,
       notes,
       status,
     } = body;
 
-    // Get match with team info
-    const { data: match } = await supabase
+    // Get match to check permissions
+    const { data: existingMatch } = await supabase
       .from("matches")
       .select(
         `
         id,
         home_team_id,
-        status,
         teams:home_team_id (
-          id,
-          club_id
+          clubs:club_id (
+            id
+          )
         )
       `
       )
       .eq("id", matchId)
       .single();
 
-    if (!match) {
+    if (!existingMatch) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    const clubId = (match.teams as { club_id: string }).club_id;
+    // Check permissions
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, club_id")
+      .eq("user_id", user.id);
 
-    // Check access based on role
-    const isSuperAdmin = roles.some((r) => r.role === "super_admin");
-    const isClubAdmin = roles.some(
+    const isSuperAdmin = roles?.some((r) => r.role === "super_admin");
+    const clubId = existingMatch.teams?.clubs?.id;
+    const isClubAdmin = roles?.some(
       (r) => r.role === "club_admin" && r.club_id === clubId
     );
 
     let isCoach = false;
-    if (roles.some((r) => r.role === "coach")) {
+    if (!isSuperAdmin && !isClubAdmin) {
       const { data: coach } = await supabase
         .from("coaches")
         .select("id")
@@ -83,9 +187,9 @@ export async function PATCH(
           .from("team_coaches")
           .select("id")
           .eq("coach_id", coach.id)
-          .eq("team_id", match.home_team_id)
+          .eq("team_id", existingMatch.home_team_id)
           .eq("is_active", true)
-          .maybeSingle();
+          .single();
 
         isCoach = !!assignment;
       }
@@ -93,57 +197,48 @@ export async function PATCH(
 
     if (!isSuperAdmin && !isClubAdmin && !isCoach) {
       return NextResponse.json(
-        { error: "You do not have access to this match" },
+        { error: "You do not have permission to update this match" },
         { status: 403 }
       );
     }
 
-    // Build update object (only update provided fields)
-    const updateData: Record<string, unknown> = {};
-    if (away_team_name !== undefined) updateData.away_team_name = away_team_name;
-    if (match_date !== undefined) updateData.match_date = match_date;
-    if (start_time !== undefined) updateData.start_time = start_time;
-    if (location !== undefined) updateData.location = location;
-    if (competition !== undefined) updateData.competition = competition || null;
-    if (notes !== undefined) updateData.notes = notes || null;
-    if (status !== undefined) updateData.status = status;
-
-    // Update the match
-    const { data: updatedMatch, error: updateError } = await supabase
+    // Update match
+    const { data: match, error } = await supabase
       .from("matches")
-      .update(updateData)
+      .update({
+        away_team_name,
+        match_date,
+        start_time,
+        location,
+        competition: competition || null,
+        home_score: home_score !== undefined ? home_score : null,
+        away_score: away_score !== undefined ? away_score : null,
+        notes: notes || null,
+        status: status || "scheduled",
+      })
       .eq("id", matchId)
       .select()
       .single();
 
-    if (updateError) {
-      console.error("Match update error:", updateError);
-      throw new Error(`Failed to update match: ${updateError.message}`);
+    if (error) {
+      console.error("Error updating match:", error);
+      return NextResponse.json(
+        { error: "Failed to update match" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      match: updatedMatch,
-    });
+    return NextResponse.json({ match });
   } catch (error) {
-    console.error("Error updating match:", error);
-
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
+    console.error("Error in update match route:", error);
     return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: errorMessage,
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/matches/[matchId] - Cancel a match (set status to cancelled)
+// DELETE /api/matches/[matchId] - Cancel match (soft delete)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ matchId: string }> }
@@ -152,7 +247,6 @@ export async function DELETE(
     const { matchId } = await params;
     const supabase = await createClient();
 
-    // Check authentication
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -161,47 +255,41 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check user roles
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role, club_id")
-      .eq("user_id", user.id)
-      .in("role", ["super_admin", "club_admin", "coach"]);
-
-    if (!roles || roles.length === 0) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Get match with team info
-    const { data: match } = await supabase
+    // Get match to check permissions
+    const { data: existingMatch } = await supabase
       .from("matches")
       .select(
         `
         id,
         home_team_id,
         teams:home_team_id (
-          id,
-          club_id
+          clubs:club_id (
+            id
+          )
         )
       `
       )
       .eq("id", matchId)
       .single();
 
-    if (!match) {
+    if (!existingMatch) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    const clubId = (match.teams as { club_id: string }).club_id;
+    // Check permissions
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, club_id")
+      .eq("user_id", user.id);
 
-    // Check access based on role
-    const isSuperAdmin = roles.some((r) => r.role === "super_admin");
-    const isClubAdmin = roles.some(
+    const isSuperAdmin = roles?.some((r) => r.role === "super_admin");
+    const clubId = existingMatch.teams?.clubs?.id;
+    const isClubAdmin = roles?.some(
       (r) => r.role === "club_admin" && r.club_id === clubId
     );
 
     let isCoach = false;
-    if (roles.some((r) => r.role === "coach")) {
+    if (!isSuperAdmin && !isClubAdmin) {
       const { data: coach } = await supabase
         .from("coaches")
         .select("id")
@@ -213,9 +301,9 @@ export async function DELETE(
           .from("team_coaches")
           .select("id")
           .eq("coach_id", coach.id)
-          .eq("team_id", match.home_team_id)
+          .eq("team_id", existingMatch.home_team_id)
           .eq("is_active", true)
-          .maybeSingle();
+          .single();
 
         isCoach = !!assignment;
       }
@@ -223,39 +311,30 @@ export async function DELETE(
 
     if (!isSuperAdmin && !isClubAdmin && !isCoach) {
       return NextResponse.json(
-        { error: "You do not have access to this match" },
+        { error: "You do not have permission to cancel this match" },
         { status: 403 }
       );
     }
 
-    // Cancel the match (soft delete by setting status)
-    const { error: cancelError } = await supabase
+    // Soft delete - set status to cancelled
+    const { error } = await supabase
       .from("matches")
       .update({ status: "cancelled" })
       .eq("id", matchId);
 
-    if (cancelError) {
-      console.error("Match cancel error:", cancelError);
-      throw new Error(`Failed to cancel match: ${cancelError.message}`);
+    if (error) {
+      console.error("Error cancelling match:", error);
+      return NextResponse.json(
+        { error: "Failed to cancel match" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Match cancelled successfully",
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error cancelling match:", error);
-
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
+    console.error("Error in cancel match route:", error);
     return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: errorMessage,
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

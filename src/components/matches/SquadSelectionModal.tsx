@@ -42,6 +42,10 @@ export default function SquadSelectionModal({
 
   useEffect(() => {
     if (isOpen) {
+      if (!matchId || !teamId) {
+        setError("Match or team information is missing");
+        return;
+      }
       fetchPlayers();
       fetchSquad();
     }

@@ -784,6 +784,8 @@
 - [x] Save squad to match_squads table
 - [x] Accessible from Match Detail Modal
 - [x] Works for both coach and club admin portals
+- [x] Create dedicated match details page with full info
+- [x] Prominent squad display in details page
 - [ ] Formation builder (deferred - future enhancement)
 - [ ] Send notifications to selected players (deferred to Phase 9)
 - [x] Test: Select squad, save successfully ✅
@@ -803,8 +805,18 @@
 - ✅ Integration with Match Detail Modal (Select Squad button)
 - ✅ Role-based access control (coach, club_admin, super_admin)
 - ✅ Data persistence in match_squads table
+- ✅ **Dedicated Match Details Page** (`/coach/matches/[matchId]` & `/club/[clubId]/matches/[matchId]`)
+  - ✅ Full match information display
+  - ✅ Prominent squad section with Starting 11 and Substitutes
+  - ✅ Jersey numbers displayed with player names
+  - ✅ Position information per player
+  - ✅ Color-coded player cards (green for starting, gray for subs)
+  - ✅ Stats summary (total selected, starting 11, subs)
+  - ✅ Edit match and squad directly from details page
+  - ✅ Back navigation to matches list
+  - ✅ Status badges and match actions
 
-**Deliverable:** ✅ Squad selection complete!
+**Deliverable:** ✅ Squad selection complete with dedicated details page!
 
 ### 5.6 Match Results & Statistics 📝
 - [ ] Create match result entry form

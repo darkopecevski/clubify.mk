@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Calendar, Clock, MapPin, Trophy, FileText, Edit2, Ban, Users } from "lucide-react";
 
 type Match = {
@@ -36,6 +36,15 @@ type MatchDetailModalProps = {
   match: Match | null;
 };
 
+type SquadMember = {
+  id: string;
+  is_starting: boolean;
+  players: {
+    first_name: string;
+    last_name: string;
+  };
+};
+
 export default function MatchDetailModal({
   isOpen,
   onClose,
@@ -46,8 +55,36 @@ export default function MatchDetailModal({
 }: MatchDetailModalProps) {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [squad, setSquad] = useState<SquadMember[]>([]);
+  const [squadLoading, setSquadLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && match) {
+      fetchSquad();
+    }
+  }, [isOpen, match?.id]);
+
+  const fetchSquad = async () => {
+    if (!match) return;
+
+    try {
+      setSquadLoading(true);
+      const response = await fetch(`/api/matches/${match.id}/squad`);
+      if (response.ok) {
+        const data = await response.json();
+        setSquad(data.squad || []);
+      }
+    } catch (err) {
+      console.error("Error fetching squad:", err);
+    } finally {
+      setSquadLoading(false);
+    }
+  };
 
   if (!isOpen || !match) return null;
+
+  const startingCount = squad.filter((s) => s.is_starting).length;
+  const totalSquad = squad.length;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + "T00:00:00");
@@ -223,6 +260,101 @@ export default function MatchDetailModal({
                 </div>
               </div>
             )}
+
+            {/* Squad Information */}
+            {match.status === "scheduled" && (
+              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Squad Selection
+                      </div>
+                      {squadLoading ? (
+                        <div className="mt-1 text-sm text-gray-400">Loading...</div>
+                      ) : totalSquad > 0 ? (
+                        <div className="mt-1 flex items-center gap-3 text-sm">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {totalSquad} players selected
+                          </span>
+                          <span className="text-gray-500 dark:text-gray-400">•</span>
+                          <span
+                            className={`font-medium ${
+                              startingCount === 11
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-orange-600 dark:text-orange-400"
+                            }`}
+                          >
+                            {startingCount} starting
+                          </span>
+                          <span className="text-gray-500 dark:text-gray-400">•</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {totalSquad - startingCount} subs
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-sm text-orange-600 dark:text-orange-400">
+                          No squad selected yet
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {onSelectSquad && (
+                    <button
+                      onClick={onSelectSquad}
+                      className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                    >
+                      {totalSquad > 0 ? "Edit Squad" : "Select Squad"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Squad List */}
+                {totalSquad > 0 && !squadLoading && (
+                  <div className="mt-4 space-y-2">
+                    {startingCount > 0 && (
+                      <div>
+                        <div className="mb-1 text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                          Starting 11
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {squad
+                            .filter((s) => s.is_starting)
+                            .map((s) => (
+                              <span
+                                key={s.id}
+                                className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                              >
+                                {s.players.first_name} {s.players.last_name}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {totalSquad - startingCount > 0 && (
+                      <div>
+                        <div className="mb-1 text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                          Substitutes
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {squad
+                            .filter((s) => !s.is_starting)
+                            .map((s) => (
+                              <span
+                                key={s.id}
+                                className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                              >
+                                {s.players.first_name} {s.players.last_name}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -244,18 +376,6 @@ export default function MatchDetailModal({
                 >
                   Close
                 </button>
-                {onSelectSquad && (
-                  <button
-                    onClick={() => {
-                      onSelectSquad();
-                      onClose();
-                    }}
-                    className="flex items-center gap-2 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                  >
-                    <Users className="h-4 w-4" />
-                    Select Squad
-                  </button>
-                )}
                 <button
                   onClick={onEdit}
                   className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"

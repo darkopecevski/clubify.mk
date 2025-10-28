@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Trophy,
   Calendar,
@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import ScheduleMatchModal from "@/components/matches/ScheduleMatchModal";
 import EditMatchModal from "@/components/matches/EditMatchModal";
-import MatchDetailModal from "@/components/matches/MatchDetailModal";
-import SquadSelectionModal from "@/components/matches/SquadSelectionModal";
 
 type Match = {
   id: string;
@@ -49,6 +47,7 @@ type Team = {
 
 export default function MatchesPageClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const teamFilter = searchParams.get("team");
 
   const [matches, setMatches] = useState<Match[]>([]);
@@ -58,9 +57,7 @@ export default function MatchesPageClient() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamFilter || "all");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showSquadModal, setShowSquadModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   const [stats, setStats] = useState({
@@ -363,8 +360,7 @@ export default function MatchesPageClient() {
                     key={match.id}
                     className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                     onClick={() => {
-                      setSelectedMatch(match);
-                      setShowDetailModal(true);
+                      router.push(`/coach/matches/${match.id}`);
                     }}
                   >
                     {/* Date & Time */}
@@ -449,47 +445,17 @@ export default function MatchesPageClient() {
         teams={teams}
       />
 
-      <EditMatchModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedMatch(null);
-        }}
-        onSuccess={fetchMatches}
-        match={selectedMatch}
-      />
-
-      <MatchDetailModal
-        isOpen={showDetailModal}
-        onClose={() => {
-          setShowDetailModal(false);
-          setSelectedMatch(null);
-        }}
-        onEdit={() => {
-          setShowDetailModal(false);
-          setShowEditModal(true);
-        }}
-        onSelectSquad={() => {
-          setShowDetailModal(false);
-          setShowSquadModal(true);
-        }}
-        onCancel={fetchMatches}
-        match={selectedMatch}
-      />
-
-      <SquadSelectionModal
-        isOpen={showSquadModal}
-        onClose={() => {
-          setShowSquadModal(false);
-          setSelectedMatch(null);
-        }}
-        onSuccess={() => {
-          setShowSquadModal(false);
-          fetchMatches();
-        }}
-        matchId={selectedMatch?.id || ""}
-        teamId={selectedMatch?.home_team_id || ""}
-      />
+      {showEditModal && selectedMatch && (
+        <EditMatchModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedMatch(null);
+          }}
+          onSuccess={fetchMatches}
+          match={selectedMatch}
+        />
+      )}
     </div>
   );
 }
