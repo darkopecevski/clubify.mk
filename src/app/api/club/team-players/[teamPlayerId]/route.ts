@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { TablesUpdate } from "@/lib/database.types";
 
 // PATCH /api/club/team-players/[teamPlayerId] - Update jersey number
 export async function PATCH(
@@ -104,9 +105,10 @@ export async function PATCH(
     const adminSupabase = createAdminClient();
 
     // Update the jersey number
+    const updateData: TablesUpdate<"team_players"> = { jersey_number };
     const { error: updateError } = await adminSupabase
       .from("team_players")
-      .update({ jersey_number })
+      .update(updateData)
       .eq("id", teamPlayerId);
 
     if (updateError) {

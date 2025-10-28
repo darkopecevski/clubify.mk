@@ -14,7 +14,7 @@ type TrainingSession = {
   location: string | null;
   notes: string | null;
   recurrence_id: string | null;
-  is_override: boolean;
+  is_override?: boolean;
   teams: {
     id: string;
     name: string;

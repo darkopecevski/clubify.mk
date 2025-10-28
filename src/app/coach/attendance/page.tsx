@@ -34,7 +34,8 @@ export default async function AttendancePage() {
   if (!isSuperAdmin) {
     const clubIds = roles
       .filter((r) => r.role === "club_admin" && r.club_id)
-      .map((r) => r.club_id);
+      .map((r) => r.club_id!)
+      .filter((id): id is string => id !== null);
 
     if (clubIds.length > 0) {
       teamsQuery = teamsQuery.in("club_id", clubIds);

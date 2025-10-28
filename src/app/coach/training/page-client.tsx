@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Plus,
   Calendar as CalendarIcon,
@@ -14,7 +13,6 @@ import {
   Edit,
   List,
   X,
-  Eye,
   Users,
   UserCheck,
   CheckCircle,
@@ -29,7 +27,7 @@ type Team = {
   club: {
     id: string;
     name: string;
-  };
+  } | null;
 };
 
 type TrainingSession = {
@@ -40,7 +38,7 @@ type TrainingSession = {
   location: string | null;
   notes: string | null;
   recurrence_id: string | null;
-  is_override: boolean;
+  is_override?: boolean;
   teams: {
     id: string;
     name: string;

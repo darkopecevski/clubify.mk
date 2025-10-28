@@ -24,7 +24,20 @@ export default async function CoachDashboardPage() {
   const isClubAdmin = roles?.some((r) => r.role === "club_admin") || false;
   const isCoach = roles?.some((r) => r.role === "coach") || false;
 
-  let teams: any[] = [];
+  type TeamWithClub = {
+    id: string;
+    name: string;
+    age_group: string | null;
+    season: string | null;
+    role: string;
+    club: {
+      id: string;
+      name: string;
+      logo_url: string | null;
+    } | null;
+  };
+
+  let teams: TeamWithClub[] = [];
 
   if (isSuperAdmin) {
     // Super admin: show all teams from all clubs
@@ -56,7 +69,7 @@ export default async function CoachDashboardPage() {
       })) || [];
   } else if (isClubAdmin) {
     // Club admin: show all teams from their clubs
-    const clubIds = roles?.filter((r) => r.role === "club_admin").map((r) => r.club_id) || [];
+    const clubIds = roles?.filter((r) => r.role === "club_admin" && r.club_id).map((r) => r.club_id!) || [];
 
     const { data: clubTeams } = await supabase
       .from("teams")
@@ -121,14 +134,27 @@ export default async function CoachDashboardPage() {
         .not("teams", "is", null);
 
       teams =
-        teamAssignments?.map((assignment) => ({
-          id: (assignment.teams as any).id,
-          name: (assignment.teams as any).name,
-          age_group: (assignment.teams as any).age_group,
-          season: (assignment.teams as any).season,
-          role: assignment.role,
-          club: (assignment.teams as any).clubs,
-        })) || [];
+        teamAssignments?.map((assignment) => {
+          const team = assignment.teams as {
+            id: string;
+            name: string;
+            age_group: string | null;
+            season: string | null;
+            clubs: {
+              id: string;
+              name: string;
+              logo_url: string | null;
+            } | null;
+          };
+          return {
+            id: team.id,
+            name: team.name,
+            age_group: team.age_group,
+            season: team.season,
+            role: assignment.role,
+            club: team.clubs,
+          };
+        }) || [];
     }
   }
 
@@ -172,23 +198,23 @@ export default async function CoachDashboardPage() {
       `
       id,
       match_date,
-      match_time,
-      opponent_name,
-      venue,
-      match_type,
-      is_home,
-      teams:team_id (
+      start_time,
+      away_team_name,
+      location,
+      competition,
+      status,
+      teams:home_team_id (
         id,
         name,
         age_group
       )
     `
     )
-    .in("team_id", teamIds.length > 0 ? teamIds : ["00000000-0000-0000-0000-000000000000"])
+    .in("home_team_id", teamIds.length > 0 ? teamIds : ["00000000-0000-0000-0000-000000000000"])
     .gte("match_date", today)
     .lte("match_date", nextWeek)
     .order("match_date", { ascending: true })
-    .order("match_time", { ascending: true })
+    .order("start_time", { ascending: true })
     .limit(5);
 
   // Get recent attendance stats (last 30 days)

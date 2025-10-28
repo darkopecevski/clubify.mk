@@ -21,7 +21,7 @@ type Team = {
     id: string;
     name: string;
     logo_url: string | null;
-  };
+  } | null;
 };
 
 type TrainingSession = {
@@ -41,11 +41,11 @@ type TrainingSession = {
 type Match = {
   id: string;
   match_date: string;
-  match_time: string | null;
-  opponent_name: string;
-  venue: string | null;
-  match_type: string;
-  is_home: boolean;
+  start_time: string;
+  away_team_name: string | null;
+  location: string;
+  competition: string | null;
+  status: string;
   teams: {
     id: string;
     name: string;
@@ -95,10 +95,6 @@ export default function CoachDashboardClient({
     const endHours = Math.floor(totalMinutes / 60) % 24;
     const endMinutes = totalMinutes % 60;
     return `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
-  };
-
-  const formatMatchType = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   return (
@@ -220,10 +216,10 @@ export default function CoachDashboardClient({
                     {team.name}
                   </h3>
                   <div className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span>{team.club.name}</span>
+                    {team.club && <span>{team.club.name}</span>}
                     {team.age_group && (
                       <>
-                        <span>•</span>
+                        {team.club && <span>•</span>}
                         <span>{team.age_group}</span>
                       </>
                     )}
@@ -342,37 +338,33 @@ export default function CoachDashboardClient({
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium text-gray-900 dark:text-white">
-                          {match.teams.name} vs {match.opponent_name}
+                          {match.teams.name} vs {match.away_team_name || "TBD"}
                         </h3>
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            match.is_home
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                          }`}
-                        >
-                          {match.is_home ? "Home" : "Away"}
-                        </span>
+                        {match.competition && (
+                          <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
+                            {match.competition}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <Clock className="h-4 w-4" />
                         <span>{formatDate(match.match_date)}</span>
-                        {match.match_time && (
+                        {match.start_time && (
                           <>
                             <span>•</span>
-                            <span>{formatTime(match.match_time)}</span>
+                            <span>{formatTime(match.start_time)}</span>
                           </>
                         )}
                       </div>
-                      {match.venue && (
+                      {match.location && (
                         <div className="mt-1 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                           <MapPin className="h-4 w-4" />
-                          <span>{match.venue}</span>
+                          <span>{match.location}</span>
                         </div>
                       )}
                       <div className="mt-1">
-                        <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
-                          {formatMatchType(match.match_type)}
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          {match.status}
                         </span>
                       </div>
                     </div>

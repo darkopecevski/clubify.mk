@@ -24,7 +24,18 @@ export default async function TrainingPage() {
   const isClubAdmin = roles?.some((r) => r.role === "club_admin") || false;
   const isCoach = roles?.some((r) => r.role === "coach") || false;
 
-  let teams: any[] = [];
+  type TeamWithClub = {
+    id: string;
+    name: string;
+    age_group: string | null;
+    season: string | null;
+    club: {
+      id: string;
+      name: string;
+    } | null;
+  };
+
+  let teams: TeamWithClub[] = [];
 
   if (isSuperAdmin) {
     // Super admin: show all teams from all clubs
@@ -54,7 +65,7 @@ export default async function TrainingPage() {
       })) || [];
   } else if (isClubAdmin) {
     // Club admin: show all teams from their clubs
-    const clubIds = roles?.filter((r) => r.role === "club_admin").map((r) => r.club_id) || [];
+    const clubIds = roles?.filter((r) => r.role === "club_admin" && r.club_id).map((r) => r.club_id!) || [];
 
     const { data: clubTeams } = await supabase
       .from("teams")
@@ -115,13 +126,25 @@ export default async function TrainingPage() {
         .not("teams", "is", null);
 
       teams =
-        teamAssignments?.map((assignment) => ({
-          id: (assignment.teams as any).id,
-          name: (assignment.teams as any).name,
-          age_group: (assignment.teams as any).age_group,
-          season: (assignment.teams as any).season,
-          club: (assignment.teams as any).clubs,
-        })) || [];
+        teamAssignments?.map((assignment) => {
+          const team = assignment.teams as {
+            id: string;
+            name: string;
+            age_group: string | null;
+            season: string | null;
+            clubs: {
+              id: string;
+              name: string;
+            } | null;
+          };
+          return {
+            id: team.id,
+            name: team.name,
+            age_group: team.age_group,
+            season: team.season,
+            club: team.clubs,
+          };
+        }) || [];
     }
   }
 
@@ -141,7 +164,6 @@ export default async function TrainingPage() {
       location,
       notes,
       recurrence_id,
-      is_override,
       created_at,
       teams:team_id (
         id,
