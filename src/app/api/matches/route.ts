@@ -53,10 +53,25 @@ export async function GET(request: Request) {
       }
       // If no filter, we'll fetch all matches (no team filter)
     } else if (isClubAdmin) {
-      // Club admin can see matches for all teams in their clubs
-      const clubIds = roles
-        .filter((r) => r.role === "club_admin" && r.club_id)
-        .map((r) => r.club_id!);
+      // Club admin can see matches for teams in their clubs
+      // If club_id filter is provided, use that specific club
+      // Otherwise, use all clubs the admin has access to
+      let clubIds: string[] = [];
+
+      if (clubIdFilter) {
+        // Verify the admin has access to this club
+        const hasAccess = roles.some(
+          (r) => r.role === "club_admin" && r.club_id === clubIdFilter
+        );
+        if (hasAccess) {
+          clubIds = [clubIdFilter];
+        }
+      } else {
+        // No filter provided, use all clubs
+        clubIds = roles
+          .filter((r) => r.role === "club_admin" && r.club_id)
+          .map((r) => r.club_id!);
+      }
 
       if (clubIds.length > 0) {
         const { data: clubTeams } = await supabase

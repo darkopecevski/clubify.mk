@@ -1132,3 +1132,5 @@ async function DELETE(req: Request) {
 
 🚀 **Let's build something great!**
 - Add to memory. After each phase is finished update the TODO.md
+- Add to memory. Never commit and push without me asking for that.
+- Add to memory. Always run build before pushing code. Do not push until build passes.
