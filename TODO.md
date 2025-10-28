@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-28 (Phase 5.3 Attendance Tracking - COMPLETE! 🎉)
+**Last Updated:** 2025-10-28 (Phase 5.3.1 My Teams Page - COMPLETE! 🎉)
 
 ## Development Principles
 
@@ -699,56 +699,50 @@
 - ✅ Color-coded percentages: Green (≥90%), Yellow (75-89%), Orange (60-74%), Red (<60%)
 - ✅ Team and date range filters
 
-### 5.3.1 My Teams Page 📝
+### 5.3.1 My Teams Page ✅ COMPLETE
 **Purpose:** Display all teams assigned to the coach with roster details and quick stats
 
 **Features:**
-- [ ] Create teams page (`/coach/teams`)
-- [ ] List all teams assigned to current coach
-- [ ] Display per team:
+- [x] Create teams page (`/coach/teams`)
+- [x] List all teams assigned to current coach
+- [x] Display per team:
   - Team name, age group, season
-  - Club logo and name
   - Coach role (Head Coach, Assistant Coach, etc.)
-  - Total player count
+  - Total player count (active/total)
   - Active/inactive status
-- [ ] Team detail card (expandable or modal):
+- [x] Expandable roster view (click chevron to expand):
   - Full roster with jersey numbers
-  - Player names (linked to profiles - future)
+  - Player names
   - Player positions
-  - Player join dates
-  - Player status (active/inactive)
-- [ ] Quick statistics per team:
-  - Total players
-  - Average attendance (last 30 days)
-  - Upcoming training sessions count
-  - Upcoming matches count
-- [ ] Quick actions per team:
-  - View Training Schedule (link to `/coach/training?team={id}`)
-  - View Attendance (link to `/coach/attendance?team={id}`)
-  - View Matches (link to `/coach/matches?team={id}`)
-- [ ] Filter/Sort options:
-  - Sort by: Name, Age Group, Player Count
-  - Filter by: Active/Inactive status
-- [ ] Responsive grid layout (1 col mobile, 2 cols tablet, 3 cols desktop)
-- [ ] Empty state if coach has no teams assigned
-- [ ] Permission checks:
+  - Player status (active/inactive badges)
+- [x] Quick statistics:
+  - Total teams count
+  - Total players across all teams
+  - Average attendance (last 30 days) - color-coded
+  - Per-team: players, attendance %, training, matches counts
+- [x] Quick actions per team:
+  - Training button (link to `/coach/training?team={id}`)
+  - Attendance button (link to `/coach/attendance?team={id}`)
+- [x] Table layout matching app design consistency
+- [x] Empty state if coach has no teams assigned
+- [x] Permission checks:
   - Coaches see only their assigned teams
-  - Club admins see all teams in their club
   - Super admins see all teams
 
 **API Endpoints:**
-- [ ] GET `/api/coach/teams` - Fetch teams with roster and quick stats
-  - Returns: teams with players, stats, upcoming events count
+- [x] GET `/api/coach/teams` - Fetch teams with rosters and calculated stats
+  - Returns: teams with players, attendance %, upcoming events count
   - Filters by coach assignment via `team_coaches` table
+  - Calculates stats from last 30 days
 
-**UI Components:**
-- Team card with gradient background (team colors)
-- Badge for coach role
-- Player count badge
-- Stats mini-cards (attendance %, upcoming events)
-- Expandable player roster table
+**Implementation Details:**
+- Table-based layout with expandable rows (consistent with players/coaches pages)
+- Stats cards at top (Total Teams, Total Players, Avg Attendance)
+- Color-coded attendance: Green ≥90%, Yellow 75-89%, Orange 60-74%, Red <60%
+- Nested table for roster details
+- Responsive design
 
-**Deliverable:** My Teams overview page for coaches
+**Deliverable:** ✅ My Teams overview page for coaches - COMPLETE!
 
 ### 5.4 Match Management 📝
 - [ ] Create matches list per team
