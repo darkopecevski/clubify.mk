@@ -36,7 +36,7 @@ export default async function ClubTrainingPage({
   }
 
   // Get all teams for this club
-  const { data: teams } = await supabase
+  const { data: teamsData } = await supabase
     .from("teams")
     .select(
       `
@@ -52,6 +52,15 @@ export default async function ClubTrainingPage({
     )
     .eq("club_id", clubId)
     .eq("is_active", true);
+
+  // Transform teams data to match expected type (clubs -> club)
+  const teams = teamsData?.map((t) => ({
+    id: t.id,
+    name: t.name,
+    age_group: t.age_group,
+    season: t.season,
+    club: t.clubs as { id: string; name: string } | null,
+  }));
 
   const teamIds = teams?.map((t) => t.id) || [];
 
