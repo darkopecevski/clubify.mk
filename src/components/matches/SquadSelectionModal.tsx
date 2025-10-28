@@ -50,8 +50,11 @@ export default function SquadSelectionModal({
   const fetchPlayers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/club/teams/${teamId}/players`);
-      if (!response.ok) throw new Error("Failed to fetch players");
+      const response = await fetch(`/api/teams/${teamId}/players`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch players");
+      }
 
       const data = await response.json();
       const activePlayers = (data.players || [])
@@ -61,7 +64,7 @@ export default function SquadSelectionModal({
       setPlayers(activePlayers);
     } catch (err) {
       console.error("Error fetching players:", err);
-      setError("Failed to load players");
+      setError(err instanceof Error ? err.message : "Failed to load players");
     } finally {
       setLoading(false);
     }
