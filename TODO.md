@@ -699,6 +699,57 @@
 - ✅ Color-coded percentages: Green (≥90%), Yellow (75-89%), Orange (60-74%), Red (<60%)
 - ✅ Team and date range filters
 
+### 5.3.1 My Teams Page 📝
+**Purpose:** Display all teams assigned to the coach with roster details and quick stats
+
+**Features:**
+- [ ] Create teams page (`/coach/teams`)
+- [ ] List all teams assigned to current coach
+- [ ] Display per team:
+  - Team name, age group, season
+  - Club logo and name
+  - Coach role (Head Coach, Assistant Coach, etc.)
+  - Total player count
+  - Active/inactive status
+- [ ] Team detail card (expandable or modal):
+  - Full roster with jersey numbers
+  - Player names (linked to profiles - future)
+  - Player positions
+  - Player join dates
+  - Player status (active/inactive)
+- [ ] Quick statistics per team:
+  - Total players
+  - Average attendance (last 30 days)
+  - Upcoming training sessions count
+  - Upcoming matches count
+- [ ] Quick actions per team:
+  - View Training Schedule (link to `/coach/training?team={id}`)
+  - View Attendance (link to `/coach/attendance?team={id}`)
+  - View Matches (link to `/coach/matches?team={id}`)
+- [ ] Filter/Sort options:
+  - Sort by: Name, Age Group, Player Count
+  - Filter by: Active/Inactive status
+- [ ] Responsive grid layout (1 col mobile, 2 cols tablet, 3 cols desktop)
+- [ ] Empty state if coach has no teams assigned
+- [ ] Permission checks:
+  - Coaches see only their assigned teams
+  - Club admins see all teams in their club
+  - Super admins see all teams
+
+**API Endpoints:**
+- [ ] GET `/api/coach/teams` - Fetch teams with roster and quick stats
+  - Returns: teams with players, stats, upcoming events count
+  - Filters by coach assignment via `team_coaches` table
+
+**UI Components:**
+- Team card with gradient background (team colors)
+- Badge for coach role
+- Player count badge
+- Stats mini-cards (attendance %, upcoming events)
+- Expandable player roster table
+
+**Deliverable:** My Teams overview page for coaches
+
 ### 5.4 Match Management 📝
 - [ ] Create matches list per team
 - [ ] Create "Schedule Match" form
