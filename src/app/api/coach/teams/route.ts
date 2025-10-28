@@ -105,7 +105,6 @@ export async function GET() {
         `
         id,
         team_id,
-        jersey_number,
         joined_at,
         left_at,
         players:player_id (
@@ -227,7 +226,6 @@ export async function GET() {
         upcoming_matches_count: upcomingMatchesByTeam.get(team.id) || 0,
         players: players.map((p) => ({
           id: p.id,
-          jersey_number: p.jersey_number,
           joined_at: p.joined_at,
           player: p.players,
         })),

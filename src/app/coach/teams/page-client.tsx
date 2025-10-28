@@ -16,7 +16,6 @@ import {
 
 type Player = {
   id: string;
-  jersey_number: number | null;
   joined_at: string;
   player: {
     id: string;
@@ -381,9 +380,6 @@ export default function TeamsPageClient() {
                                 <thead className="bg-gray-100 dark:bg-gray-800">
                                   <tr>
                                     <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400">
-                                      #
-                                    </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400">
                                       Name
                                     </th>
                                     <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400">
@@ -397,18 +393,15 @@ export default function TeamsPageClient() {
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                   {team.players
                                     .sort((a, b) => {
-                                      if (a.jersey_number === null) return 1;
-                                      if (b.jersey_number === null) return -1;
-                                      return a.jersey_number - b.jersey_number;
+                                      const nameA = `${a.player.first_name} ${a.player.last_name}`;
+                                      const nameB = `${b.player.first_name} ${b.player.last_name}`;
+                                      return nameA.localeCompare(nameB);
                                     })
                                     .map((tp) => (
                                       <tr
                                         key={tp.id}
                                         className="hover:bg-gray-100 dark:hover:bg-gray-800"
                                       >
-                                        <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
-                                          {tp.jersey_number || "-"}
-                                        </td>
                                         <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
                                           {tp.player.first_name}{" "}
                                           {tp.player.last_name}
