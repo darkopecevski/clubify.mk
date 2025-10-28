@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import EditMatchModal from "@/components/matches/EditMatchModal";
 import SquadSelectionModal from "@/components/matches/SquadSelectionModal";
+import MatchResultsModal from "@/components/matches/MatchResultsModal";
 
 type Match = {
   id: string;
@@ -64,6 +65,7 @@ export default function MatchDetailsClient() {
   const [squadLoading, setSquadLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSquadModal, setShowSquadModal] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -462,13 +464,22 @@ export default function MatchDetailsClient() {
                   <Ban className="h-4 w-4" />
                   Cancel Match
                 </button>
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-                >
-                  <Edit2 className="h-4 w-4" />
-                  Edit Match
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowResultsModal(true)}
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    <Trophy className="h-4 w-4" />
+                    Enter Results
+                  </button>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    Edit Match
+                  </button>
+                </div>
               </>
             ) : (
               <div className="flex w-full items-center justify-between rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
@@ -520,6 +531,22 @@ export default function MatchDetailsClient() {
           }}
           matchId={match.id}
           teamId={match.home_team_id}
+        />
+      )}
+
+      {showResultsModal && match && (
+        <MatchResultsModal
+          isOpen={showResultsModal}
+          onClose={() => setShowResultsModal(false)}
+          onSuccess={() => {
+            setShowResultsModal(false);
+            fetchMatch();
+          }}
+          matchId={match.id}
+          homeTeamName={`${match.teams.clubs?.name} (${match.teams.name})`}
+          awayTeamName={match.away_team_name || ""}
+          currentHomeScore={match.home_score}
+          currentAwayScore={match.away_score}
         />
       )}
     </>
