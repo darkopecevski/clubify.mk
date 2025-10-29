@@ -97,7 +97,7 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
 
       if (playersError) throw playersError;
 
-      let filteredPlayers = playersData || [];
+      let filteredPlayers: Player[] = playersData || [];
 
       // Fetch team assignments with team details for all players
       if (filteredPlayers.length > 0) {

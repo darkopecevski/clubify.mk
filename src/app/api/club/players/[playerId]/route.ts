@@ -91,7 +91,7 @@ export async function GET(
             .eq("is_active", true)
             .in("team_id", teamIds);
 
-          hasAccess = coachTeams && coachTeams.length > 0;
+          hasAccess = !!(coachTeams && coachTeams.length > 0);
         }
       }
     }
@@ -125,14 +125,14 @@ export async function GET(
 
     // Transform parent data to get email from the RPC function
     const parentsWithEmails = await Promise.all(
-      (player.player_parents || []).map(async (pp: any) => {
+      (player.player_parents || []).map(async (pp: { parent_user_id: string; relationship: string; users: { id: string; full_name: string } }) => {
         // Get email using RPC function
         const { data: usersWithEmail } = await supabase.rpc(
           "get_users_with_email"
         );
 
         const userWithEmail = usersWithEmail?.find(
-          (u: any) => u.id === pp.parent_user_id
+          (u: { id: string; email: string }) => u.id === pp.parent_user_id
         );
 
         return {

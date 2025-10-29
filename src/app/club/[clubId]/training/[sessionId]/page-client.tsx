@@ -82,8 +82,6 @@ export default function TrainingDetailsClient() {
   const [notesValue, setNotesValue] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [sessionToDelete, setSessionToDelete] = useState<TrainingSession | null>(null);
-  const [deleteMode, setDeleteMode] = useState<"single" | "all_future">("single");
 
   useEffect(() => {
     fetchSession();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Calendar as CalendarIcon,
@@ -58,7 +58,6 @@ export default function TrainingListClient({
   pastSessions: TrainingSession[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);

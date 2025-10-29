@@ -50,8 +50,29 @@ export default function CoachPlayerProfilePage({
   const [teams, setTeams] = useState<TeamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [trainingAttendance, setTrainingAttendance] = useState<any>(null);
-  const [matchStatistics, setMatchStatistics] = useState<any>(null);
+  const [trainingAttendance, setTrainingAttendance] = useState<{
+    statistics?: {
+      last30Days?: { attendancePercentage: number; present: number; late: number; absent: number; excused: number; injured: number };
+      last90Days?: { attendancePercentage: number; present: number; late: number; absent: number; excused: number; injured: number };
+      allTime?: { attendancePercentage: number; present: number; late: number; absent: number; excused: number; injured: number };
+    };
+    recentAttendance?: Array<{ date: string; team: string; status: string }>;
+  } | null>(null);
+  const [matchStatistics, setMatchStatistics] = useState<{
+    summary?: {
+      matchesThisSeason: number;
+      matchesAllTime: number;
+      totalGoals: number;
+      goalsPerMatch: number;
+      totalAssists: number;
+      assistsPerMatch: number;
+      yellowCards: number;
+      redCards: number;
+      averageRating: number;
+      minutesPlayed: number;
+    };
+    recentMatches?: Array<{ date: string; opponent: string; result: string; score: string; goals: number; assists: number; rating: number }>;
+  } | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -566,7 +587,7 @@ export default function CoachPlayerProfilePage({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {trainingAttendance.recentAttendance.slice(0, 10).map((session: any, index: number) => (
+                      {trainingAttendance.recentAttendance.slice(0, 10).map((session: { date: string; team: string; status: string }, index: number) => (
                         <tr key={index}>
                           <td className="py-2 text-gray-900 dark:text-white">
                             {new Date(session.date).toLocaleDateString()}
@@ -731,7 +752,7 @@ export default function CoachPlayerProfilePage({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {matchStatistics.recentMatches.slice(0, 10).map((match: any, index: number) => (
+                      {matchStatistics.recentMatches.slice(0, 10).map((match: { date: string; opponent: string; result: string; score: string; goals: number; assists: number; rating: number }, index: number) => (
                         <tr key={index}>
                           <td className="py-2 text-gray-900 dark:text-white">
                             {new Date(match.date).toLocaleDateString()}
