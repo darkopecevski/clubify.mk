@@ -54,6 +54,21 @@ type SquadMember = {
   };
 };
 
+type PlayerStatistic = {
+  id: string;
+  player_id: string;
+  goals: number;
+  assists: number;
+  yellow_cards: number;
+  red_cards: number;
+  rating: number | null;
+  players: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+};
+
 export default function MatchDetailsClient() {
   const params = useParams();
   const router = useRouter();
@@ -61,8 +76,10 @@ export default function MatchDetailsClient() {
 
   const [match, setMatch] = useState<Match | null>(null);
   const [squad, setSquad] = useState<SquadMember[]>([]);
+  const [statistics, setStatistics] = useState<PlayerStatistic[]>([]);
   const [loading, setLoading] = useState(true);
   const [squadLoading, setSquadLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
@@ -72,6 +89,7 @@ export default function MatchDetailsClient() {
   useEffect(() => {
     fetchMatch();
     fetchSquad();
+    fetchStatistics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId]);
 
@@ -103,6 +121,21 @@ export default function MatchDetailsClient() {
       console.error("Error fetching squad:", err);
     } finally {
       setSquadLoading(false);
+    }
+  };
+
+  const fetchStatistics = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await fetch(`/api/matches/${matchId}/results`);
+      if (response.ok) {
+        const data = await response.json();
+        setStatistics(data.statistics || []);
+      }
+    } catch (err) {
+      console.error("Error fetching statistics:", err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -310,6 +343,194 @@ export default function MatchDetailsClient() {
             )}
           </div>
         </div>
+
+        {/* Match Statistics Section */}
+        {match.status === "completed" && (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Match Statistics
+              </h2>
+              <button
+                onClick={() => setShowResultsModal(true)}
+                className="flex items-center gap-2 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Results
+              </button>
+            </div>
+
+            {statsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+              </div>
+            ) : statistics.length > 0 ? (
+              <div className="space-y-4">
+                {/* Goal Scorers */}
+                {statistics.some((s) => s.goals > 0) && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-medium uppercase text-gray-500 dark:text-gray-400">
+                      Goal Scorers
+                    </h3>
+                    <div className="space-y-2">
+                      {statistics
+                        .filter((s) => s.goals > 0)
+                        .sort((a, b) => b.goals - a.goals)
+                        .map((stat) => (
+                          <div
+                            key={stat.id}
+                            className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
+                                {stat.goals}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {stat.players.first_name} {stat.players.last_name}
+                                </div>
+                                {stat.assists > 0 && (
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                                    {stat.assists} {stat.assists === 1 ? "assist" : "assists"}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {stat.rating && (
+                              <div className="flex items-center gap-1">
+                                <Trophy className="h-4 w-4 text-yellow-500" />
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {stat.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Players with Assists */}
+                {statistics.some((s) => s.assists > 0 && s.goals === 0) && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-medium uppercase text-gray-500 dark:text-gray-400">
+                      Assists
+                    </h3>
+                    <div className="space-y-2">
+                      {statistics
+                        .filter((s) => s.assists > 0 && s.goals === 0)
+                        .sort((a, b) => b.assists - a.assists)
+                        .map((stat) => (
+                          <div
+                            key={stat.id}
+                            className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
+                                {stat.assists}
+                              </div>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {stat.players.first_name} {stat.players.last_name}
+                              </div>
+                            </div>
+                            {stat.rating && (
+                              <div className="flex items-center gap-1">
+                                <Trophy className="h-4 w-4 text-yellow-500" />
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {stat.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cards */}
+                {statistics.some((s) => s.yellow_cards > 0 || s.red_cards > 0) && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-medium uppercase text-gray-500 dark:text-gray-400">
+                      Disciplinary
+                    </h3>
+                    <div className="space-y-2">
+                      {statistics
+                        .filter((s) => s.yellow_cards > 0 || s.red_cards > 0)
+                        .map((stat) => (
+                          <div
+                            key={stat.id}
+                            className="flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20"
+                          >
+                            <div className="flex-1 font-medium text-gray-900 dark:text-white">
+                              {stat.players.first_name} {stat.players.last_name}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {stat.yellow_cards > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <div className="h-5 w-4 rounded bg-yellow-400" />
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {stat.yellow_cards}
+                                  </span>
+                                </div>
+                              )}
+                              {stat.red_cards > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <div className="h-5 w-4 rounded bg-red-600" />
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {stat.red_cards}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Performers */}
+                {statistics.some((s) => s.rating && s.rating >= 7) && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-medium uppercase text-gray-500 dark:text-gray-400">
+                      Top Performers (Rating 7.0+)
+                    </h3>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {statistics
+                        .filter((s) => s.rating && s.rating >= 7)
+                        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                        .map((stat) => (
+                          <div
+                            key={stat.id}
+                            className="flex items-center justify-between rounded-lg border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-900/20"
+                          >
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {stat.players.first_name} {stat.players.last_name}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Trophy className="h-4 w-4 text-yellow-500" />
+                              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                {stat.rating?.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/50">
+                <Trophy className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                  No statistics recorded yet
+                </p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
+                  Click &quot;Edit Results&quot; to add player statistics
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Squad Section */}
         {match.status === "scheduled" && (
@@ -541,6 +762,7 @@ export default function MatchDetailsClient() {
           onSuccess={() => {
             setShowResultsModal(false);
             fetchMatch();
+            fetchStatistics();
           }}
           matchId={match.id}
           homeTeamName={`${match.teams.clubs?.name} (${match.teams.name})`}

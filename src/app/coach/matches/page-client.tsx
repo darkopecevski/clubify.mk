@@ -346,6 +346,9 @@ export default function MatchesPageClient() {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Competition
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Result
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Status
                   </th>
@@ -405,6 +408,17 @@ export default function MatchesPageClient() {
                       <div className="text-sm text-gray-700 dark:text-gray-300">
                         {match.competition || "-"}
                       </div>
+                    </td>
+
+                    {/* Result */}
+                    <td className="whitespace-nowrap px-6 py-4 text-center">
+                      {match.status === "completed" && match.home_score !== null && match.away_score !== null ? (
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {match.home_score} - {match.away_score}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </td>
 
                     {/* Status */}

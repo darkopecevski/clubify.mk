@@ -58,51 +58,35 @@ export default function MatchResultsModal({
 
   useEffect(() => {
     if (isOpen) {
-      fetchSquad();
-      fetchExistingStats();
+      fetchSquadAndStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, matchId]);
 
-  const fetchSquad = async () => {
+  const fetchSquadAndStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/matches/${matchId}/squad`);
-      if (response.ok) {
-        const data = await response.json();
-        setSquad(data.squad || []);
-        
-        // Initialize stats for all squad members
-        const initialStats = new Map<string, PlayerStat>();
-        (data.squad || []).forEach((member: SquadMember) => {
-          initialStats.set(member.player_id, {
-            player_id: member.player_id,
-            goals: 0,
-            assists: 0,
-            yellow_cards: 0,
-            red_cards: 0,
-            rating: null,
-            notes: "",
-          });
-        });
-        setPlayerStats(initialStats);
-      }
-    } catch (err) {
-      console.error("Error fetching squad:", err);
-      setError("Failed to load squad");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchExistingStats = async () => {
-    try {
-      const response = await fetch(`/api/matches/${matchId}/results`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.statistics && data.statistics.length > 0) {
-          const existingStats = new Map<string, PlayerStat>();
-          data.statistics.forEach((stat: {
+      // Fetch squad and existing stats in parallel
+      const [squadResponse, statsResponse] = await Promise.all([
+        fetch(`/api/matches/${matchId}/squad`),
+        fetch(`/api/matches/${matchId}/results`)
+      ]);
+
+      if (!squadResponse.ok) {
+        throw new Error("Failed to fetch squad");
+      }
+
+      const squadData = await squadResponse.json();
+      const squadMembers = squadData.squad || [];
+      setSquad(squadMembers);
+
+      // Create a map of existing stats
+      const existingStatsMap = new Map<string, PlayerStat>();
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        if (statsData.statistics && statsData.statistics.length > 0) {
+          statsData.statistics.forEach((stat: {
             player_id: string;
             goals?: number;
             assists?: number;
@@ -111,7 +95,7 @@ export default function MatchResultsModal({
             rating?: number;
             notes?: string;
           }) => {
-            existingStats.set(stat.player_id, {
+            existingStatsMap.set(stat.player_id, {
               player_id: stat.player_id,
               goals: stat.goals || 0,
               assists: stat.assists || 0,
@@ -121,11 +105,30 @@ export default function MatchResultsModal({
               notes: stat.notes || "",
             });
           });
-          setPlayerStats(existingStats);
         }
       }
+
+      // Initialize stats for all squad members, using existing stats if available
+      const mergedStats = new Map<string, PlayerStat>();
+      squadMembers.forEach((member: SquadMember) => {
+        const existingStat = existingStatsMap.get(member.player_id);
+        mergedStats.set(member.player_id, existingStat || {
+          player_id: member.player_id,
+          goals: 0,
+          assists: 0,
+          yellow_cards: 0,
+          red_cards: 0,
+          rating: null,
+          notes: "",
+        });
+      });
+
+      setPlayerStats(mergedStats);
     } catch (err) {
-      console.error("Error fetching existing stats:", err);
+      console.error("Error fetching squad and stats:", err);
+      setError("Failed to load squad and statistics");
+    } finally {
+      setLoading(false);
     }
   };
 
