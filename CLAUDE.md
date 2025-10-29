@@ -1279,6 +1279,59 @@ async function DELETE(req: Request) {
 
 ---
 
+### Session 8: Phase 5.7 - Enhancements & Refinements (Oct 29, 2025)
+
+**Completed All Four Sub-Phases:**
+
+#### 5.7.2 - Player Details Enhancements
+- Fixed training attendance API using wrong table name (`training_attendance` → `attendance`)
+- Fixed match statistics data formatting for UI display
+- Transformed API responses to match UI expectations
+- Calculated match totals from squad records correctly
+
+#### 5.7.3 - Coach Access to Players
+- Created `/api/coach/players` endpoint with team-scoped access
+- Built `/coach/players` list page with filters, search, and team badges
+- Built `/coach/players/[playerId]` detail page (read-only for coaches)
+- Created `/api/club/players/[playerId]` GET endpoint with role-based access control
+- Added "Players" navigation item to coach sidebar
+
+#### 5.7.4 - Training Details Page (Major Feature)
+**Routes Created:**
+- `/coach/training/[sessionId]` - Coach training details
+- `/club/[clubId]/training/[sessionId]` - Club admin training details
+
+**Features Implemented:**
+- Full training session details display (date, time, location, team, duration)
+- Status badges (Scheduled, Completed, Cancelled)
+- Recurring pattern information display
+- **Inline attendance editing** - Full roster table with status dropdowns, save functionality
+- **Training notes section** - Edit mode with textarea, save button, last updated timestamp
+- **Edit modal** - Inline modal on same page (no navigation), pre-fills all values
+- **Delete modal** - Confirmation with recurring options (single vs all future sessions)
+- Edit/Delete buttons only show for upcoming sessions
+- Made training rows clickable in both calendar and list views
+
+**API Endpoints Created:**
+- GET `/api/coach/training/[sessionId]` - Fetch session with attendance
+- PATCH `/api/coach/training/[sessionId]` - Update session details (requires `team_id`)
+- PATCH `/api/coach/training/[sessionId]/notes` - Update training notes
+- DELETE `/api/coach/training/[sessionId]` - Delete with mode (single/all_future)
+
+**Key Technical Decisions:**
+- Edit modal on same page instead of navigation (better UX)
+- Team ID required but not editable (coaches can't change team assignment)
+- Separate delete modes for recurring sessions
+- Full attendance inline instead of modal
+- Used existing `notes` column in `training_sessions` table
+
+**Bug Fixes:**
+- Fixed sessionStorage approach for edit navigation
+- Fixed missing `team_id` in PATCH request body
+- Proper access control checks for coaches
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**

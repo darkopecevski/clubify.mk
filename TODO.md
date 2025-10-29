@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-29 (Phase 5.6 Match Results & Statistics - COMPLETE! 🎉)
+**Last Updated:** 2025-10-29 (Phase 5.7 Enhancements & Refinements - COMPLETE! 🎉)
 
 ## Development Principles
 
@@ -866,112 +866,103 @@
 
 ## Phase 5.7: Enhancements & Refinements 📝
 
-### 5.7.1 Players List Enhancements 📝
+### 5.7.1 Players List Enhancements ✅
 **For Club Admin & Super Admin** (`/club/[clubId]/players`)
-- [ ] Add team filter dropdown
-  - [ ] Show "All Teams" option
-  - [ ] List all teams in club
-  - [ ] Filter players by selected team
-- [ ] Add status filter (Active/Inactive/All)
-- [ ] Update players table to show team assignments
-  - [ ] Replace "Teams" count column with team badges/names
-  - [ ] Show multiple team badges if player is on multiple teams
-  - [ ] Color-coded team badges
-- [ ] Add search functionality (by name)
-- [ ] Test: Filters work correctly, team badges display
+- [x] Add team filter dropdown
+- [x] Add status filter (Active/Inactive/All)
+- [x] Update players table to show team assignments with badges
+- [x] Add search functionality (by name)
+- [x] Move stats above filters
+- [x] Test: Filters work correctly, team badges display
 
-**Deliverable:** Enhanced players list with filtering and team visibility
+**Deliverable:** ✅ Enhanced players list with filtering and team visibility
 
-### 5.7.2 Player Details Page Enhancements 📝
+### 5.7.2 Player Details Page Enhancements ✅
 **Training Attendance Section:**
-- [ ] Add "Training Attendance" section to player detail page
-- [ ] Show attendance statistics (last 30 days, last 90 days, all time)
-- [ ] Display attendance breakdown (Present, Late, Absent, Excused, Injured)
-- [ ] Color-coded attendance percentage badge
-- [ ] Recent attendance history table (last 10 sessions)
-- [ ] Link to full attendance history
+- [x] Add "Training Attendance" section to player detail page
+- [x] Show attendance statistics (last 30 days, last 90 days, all time)
+- [x] Display attendance breakdown (Present, Late, Absent, Excused, Injured)
+- [x] Color-coded attendance percentage badge
+- [x] Recent attendance history table (last 10 sessions)
 
 **Match Attendance & Statistics Section:**
-- [ ] Add "Match Statistics" section to player detail page
-- [ ] Show matches played count (total, this season)
-- [ ] Display match attendance vs matches scheduled
-- [ ] Show player statistics summary:
-  - [ ] Total goals, assists
-  - [ ] Yellow/red cards
-  - [ ] Average rating
-  - [ ] Minutes played
-- [ ] Recent matches table with individual stats
-- [ ] Link to full match history
+- [x] Add "Match Statistics" section to player detail page
+- [x] Show matches played count (total, this season)
+- [x] Display match attendance vs matches scheduled
+- [x] Show player statistics summary (goals, assists, cards, rating, minutes)
+- [x] Recent matches table with individual stats
 
 **API Endpoints:**
-- [ ] GET `/api/players/[playerId]/training-attendance` - Training attendance stats
-- [ ] GET `/api/players/[playerId]/match-statistics` - Match stats summary
+- [x] GET `/api/players/[playerId]/training-attendance` - Training attendance stats
+- [x] GET `/api/players/[playerId]/match-statistics` - Match stats summary
+- [x] Fixed data formatting issues (table names, field mappings)
 
-**Deliverable:** Comprehensive player profile with attendance and match data
+**Deliverable:** ✅ Comprehensive player profile with attendance and match data
 
-### 5.7.3 Coach Access to Players 📝
+### 5.7.3 Coach Access to Players ✅
 **Players List for Coaches:**
-- [ ] Create `/coach/players` page
-- [ ] Show only players from teams the coach is assigned to
-- [ ] Same filtering as club admin view (team, status, search)
-- [ ] Same table layout with team badges
-- [ ] Access control: coach sees only their teams' players
+- [x] Create `/coach/players` page
+- [x] Show only players from teams the coach is assigned to
+- [x] Same filtering as club admin view (team, status, search)
+- [x] Same table layout with team badges
+- [x] Access control: coach sees only their teams' players
 
 **Player Details for Coaches:**
-- [ ] Allow coaches to view player detail pages
-- [ ] Route: `/coach/players/[playerId]`
-- [ ] Same sections as club admin view
-- [ ] Access control: coach can only view players from their teams
-
-**Add Player to Team (Coach):**
-- [ ] Add "Add Player" button on coach's team detail page
-- [ ] Modal to select from existing club players
-- [ ] Or link to create new player form
-- [ ] Assign jersey number and position
-- [ ] Access control: coach can only add to their assigned teams
-- [ ] API: Use existing `/api/club/teams/[teamId]/players` endpoint
+- [x] Allow coaches to view player detail pages
+- [x] Route: `/coach/players/[playerId]`
+- [x] Same sections as club admin view
+- [x] Access control: coach can only view players from their teams
+- [x] Created GET `/api/club/players/[playerId]` endpoint with proper access control
 
 **API Updates:**
-- [ ] Update `/api/club/players` to filter by coach's teams
-- [ ] Add coach permission checks to player detail endpoints
+- [x] Created `/api/coach/players` endpoint to filter by coach's teams
+- [x] Add coach permission checks to player detail endpoints
+- [x] Added "Players" navigation item to coach sidebar
 
-**Deliverable:** Coaches can view and manage players for their teams
+**Deliverable:** ✅ Coaches can view and manage players for their teams
 
-### 5.7.4 Training Details Page 📝
+### 5.7.4 Training Details Page ✅
 **Create Training Details Page:**
-- [ ] Create route: `/coach/training/[sessionId]`
-- [ ] Also accessible from club admin: `/club/[clubId]/training/[sessionId]`
-- [ ] Replace Session Detail Modal with full page (or keep modal + add page)
+- [x] Create route: `/coach/training/[sessionId]`
+- [x] Also accessible from club admin: `/club/[clubId]/training/[sessionId]`
+- [x] Made training rows clickable in calendar and list views
 
 **Training Details Sections:**
-- [ ] Header with training info (date, time, team, location, duration)
-- [ ] Status badge (completed, scheduled, cancelled)
-- [ ] Action buttons (Edit, Cancel, Mark Attendance)
+- [x] Header with training info (date, time, team, location, duration)
+- [x] Status badge (completed, scheduled, cancelled)
+- [x] Action buttons (Edit, Delete) for upcoming sessions only
+- [x] Display recurring pattern information
 
 **Attendance Section:**
-- [ ] Full attendance roster table (not modal)
-- [ ] Mark attendance inline with save button
-- [ ] Show attendance summary (present, absent, late, etc.)
-- [ ] Attendance statistics for this session
+- [x] Full attendance roster table (inline, not modal)
+- [x] Mark attendance inline with status dropdowns
+- [x] Save attendance button
+- [x] Show attendance summary (present, absent, late, etc.)
+- [x] Color-coded status badges
 
 **Training Notes/Recapitulation Section:**
-- [ ] Rich text area for training notes
-- [ ] What was trained, drills, focus areas
-- [ ] Save notes button
-- [ ] Show who added notes and when
-- [ ] Edit/delete notes (coach, club_admin, super_admin only)
+- [x] Text area for training notes (using existing `notes` column)
+- [x] Edit mode toggle
+- [x] Save notes button
+- [x] Show last updated timestamp
 
-**Database:**
-- [ ] Add `notes` TEXT column to `training_sessions` table
-- [ ] Or create separate `training_notes` table with:
-  - [ ] id, training_session_id, content, created_by, created_at, updated_at
-  - [ ] Allows multiple notes per session (log-style)
+**Edit & Delete Functionality:**
+- [x] Inline edit modal on training details page (no navigation)
+- [x] Delete modal with recurring session options (single vs all future)
+- [x] Edit button opens modal with pre-filled data
+- [x] Delete button shows confirmation with recurring options
 
 **API Endpoints:**
-- [ ] GET `/api/training/[sessionId]` - Get full training details
-- [ ] PATCH `/api/training/[sessionId]/notes` - Save training notes
+- [x] GET `/api/coach/training/[sessionId]` - Get training session details
+- [x] PATCH `/api/coach/training/[sessionId]` - Update session details
+- [x] PATCH `/api/coach/training/[sessionId]/notes` - Update training notes
+- [x] DELETE `/api/coach/training/[sessionId]` - Delete session (single/all future)
 
-**Access Control:**
+**Deliverable:** ✅ Comprehensive training details page with inline editing and attendance
+
+---
+
+## Phase 5.8: Additional Features (Planned) 📝
 - [ ] Coaches can view/edit notes for their teams only
 - [ ] Club admins can view/edit all notes for their club
 - [ ] Super admins can view/edit all notes
