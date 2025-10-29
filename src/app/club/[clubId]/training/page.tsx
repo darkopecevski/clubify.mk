@@ -96,6 +96,7 @@ export default async function ClubTrainingPage({
 
   return (
     <TrainingListClient
+      clubId={clubId}
       teams={teams || []}
       upcomingSessions={upcoming}
       pastSessions={past}

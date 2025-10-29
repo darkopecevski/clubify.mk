@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Plus, UserSquare2, Loader2, Users, Upload, Search } from "lucide-react";
+import { UserSquare2, Loader2, Users, Search } from "lucide-react";
 
 type Team = {
   id: string;
@@ -24,14 +24,14 @@ type Player = {
   teams?: Team[];
 };
 
-export default function PlayersPageClient({ clubId }: { clubId: string }) {
+export default function PlayersPageClient() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    inactive: 0,
+    teams: 0,
   });
 
   // Filters
@@ -40,123 +40,48 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    fetchTeams();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId]);
-
-  useEffect(() => {
     fetchPlayers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId, selectedTeamId, selectedStatus, searchQuery]);
-
-  async function fetchTeams() {
-    const supabase = createClient();
-    try {
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name, age_group")
-        .eq("club_id", clubId)
-        .eq("is_active", true)
-        .order("name");
-
-      if (error) throw error;
-      setTeams(data || []);
-    } catch (error) {
-      console.error("Error fetching teams:", error);
-    }
-  }
+  }, [selectedTeamId, selectedStatus, searchQuery]);
 
   async function fetchPlayers() {
     setLoading(true);
-    const supabase = createClient();
-
     try {
-      // Build the base query
-      let query = supabase
-        .from("players")
-        .select("*")
-        .eq("club_id", clubId);
-
-      // Apply status filter
-      if (selectedStatus === "active") {
-        query = query.eq("is_active", true);
-      } else if (selectedStatus === "inactive") {
-        query = query.eq("is_active", false);
+      // Build query params
+      const params = new URLSearchParams();
+      if (selectedTeamId !== "all") {
+        params.append("teamId", selectedTeamId);
       }
-      // "all" doesn't need a filter
-
-      // Apply search filter
+      if (selectedStatus !== "all") {
+        params.append("status", selectedStatus);
+      }
       if (searchQuery.trim()) {
-        const searchTerm = `%${searchQuery.trim()}%`;
-        query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm}`);
+        params.append("search", searchQuery.trim());
       }
 
-      query = query.order("created_at", { ascending: false });
+      const response = await fetch(`/api/coach/players?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch players");
+      }
 
-      const { data: playersData, error: playersError } = await query;
+      const data = await response.json();
+      setPlayers(data.players || []);
+      setStats(data.stats || { total: 0, active: 0, teams: 0 });
 
-      if (playersError) throw playersError;
-
-      let filteredPlayers = playersData || [];
-
-      // Fetch team assignments with team details for all players
-      if (filteredPlayers.length > 0) {
-        const { data: teamAssignments, error: teamError } = await supabase
-          .from("team_players")
-          .select(`
-            player_id,
-            teams:team_id (
-              id,
-              name,
-              age_group
-            )
-          `)
-          .in("player_id", filteredPlayers.map((p) => p.id));
-
-        if (teamError) {
-          console.error("Error fetching team assignments:", teamError);
-        }
-
-        // Group teams by player
-        const playerTeamsMap: Record<string, Team[]> = {};
-        teamAssignments?.forEach((assignment: { player_id: string; teams: Team }) => {
-          if (!playerTeamsMap[assignment.player_id]) {
-            playerTeamsMap[assignment.player_id] = [];
+      // Extract unique teams from players
+      const uniqueTeamsMap = new Map<string, Team>();
+      data.players?.forEach((player: Player) => {
+        player.teams?.forEach((team) => {
+          if (!uniqueTeamsMap.has(team.id)) {
+            uniqueTeamsMap.set(team.id, team);
           }
-          playerTeamsMap[assignment.player_id].push(assignment.teams);
         });
-
-        // Add teams to players
-        filteredPlayers = filteredPlayers.map((player) => ({
-          ...player,
-          teams: playerTeamsMap[player.id] || [],
-        }));
-
-        // Apply team filter if selected
-        if (selectedTeamId !== "all") {
-          filteredPlayers = filteredPlayers.filter((player) =>
-            player.teams?.some((team) => team.id === selectedTeamId)
-          );
-        }
-      }
-
-      setPlayers(filteredPlayers);
-
-      // Calculate stats from ALL players (not filtered)
-      const { data: allPlayers } = await supabase
-        .from("players")
-        .select("id, is_active")
-        .eq("club_id", clubId);
-
-      if (allPlayers) {
-        setStats({
-          total: allPlayers.length,
-          active: allPlayers.filter((p) => p.is_active).length,
-          inactive: allPlayers.filter((p) => !p.is_active).length,
-        });
-      }
+      });
+      setTeams(Array.from(uniqueTeamsMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error("Error fetching players:", error);
+      setPlayers([]);
+      setStats({ total: 0, active: 0, teams: 0 });
     } finally {
       setLoading(false);
     }
@@ -185,24 +110,8 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
             Players
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage your club&apos;s players
+            Manage your team&apos;s players
           </p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href={`/club/${clubId}/players/import`}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            <Upload className="h-4 w-4" />
-            Import CSV
-          </Link>
-          <Link
-            href={`/club/${clubId}/players/create`}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-          >
-            <Plus className="h-4 w-4" />
-            Add Player
-          </Link>
         </div>
       </div>
 
@@ -244,14 +153,14 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Inactive Players
+                Teams
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {stats.inactive}
+                {stats.teams}
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
-              <UserSquare2 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/20">
+              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
@@ -336,18 +245,13 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
           <div className="py-12 text-center">
             <UserSquare2 className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-white">
-              No players yet
+              No players found
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Get started by adding your first player
+              {searchQuery || selectedTeamId !== "all" || selectedStatus !== "all"
+                ? "Try adjusting your filters"
+                : "No players assigned to your teams yet"}
             </p>
-            <Link
-              href={`/club/${clubId}/players/create`}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add Player
-            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -385,7 +289,7 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
                   >
                     <td className="whitespace-nowrap px-6 py-4">
                       <Link
-                        href={`/club/${clubId}/players/${player.id}`}
+                        href={`/coach/players/${player.id}`}
                         className="flex items-center gap-3 hover:opacity-80"
                       >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -439,7 +343,7 @@ export default function PlayersPageClient({ clubId }: { clubId: string }) {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <Link
-                        href={`/club/${clubId}/players/${player.id}`}
+                        href={`/coach/players/${player.id}`}
                         className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                       >
                         View

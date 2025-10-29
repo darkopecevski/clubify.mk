@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 
-// PUT /api/club/players/[playerId] - Update a player
-export async function PUT(
+// GET /api/club/players/[playerId] - Get player details
+export async function GET(
   request: Request,
   { params }: { params: Promise<{ playerId: string }> }
 ) {
@@ -15,251 +14,147 @@ export async function PUT(
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user has club_admin role
+    // Check user roles
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role, club_id")
-      .eq("user_id", user.id)
-      .in("role", ["super_admin", "club_admin"]);
+      .eq("user_id", user.id);
 
-    if (!roles || roles.length === 0) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const isSuperAdmin = roles?.some((r) => r.role === "super_admin");
 
-    const body = await request.json();
-    const {
-      // Personal info
-      first_name,
-      last_name,
-      date_of_birth,
-      gender,
-      photo_url,
-      // Football info
-      position,
-      dominant_foot,
-      jersey_number,
-      notes,
-      // Medical info
-      blood_type,
-      allergies,
-      medical_conditions,
-      // Emergency contact
-      emergency_contact_name,
-      emergency_contact_phone,
-      emergency_contact_relationship,
-      // Parent info
-      parent_full_name,
-      parent_relationship,
-      // Club
-      club_id,
-    } = body;
-
-    // Validate club access
-    const hasAccess =
-      roles.some((r) => r.role === "super_admin") ||
-      roles.some((r) => r.role === "club_admin" && r.club_id === club_id);
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: "You do not have access to this club" },
-        { status: 403 }
-      );
-    }
-
-    const adminSupabase = createAdminClient();
-
-    // Normalize values to match database constraints (lowercase)
-    const normalizedGender = gender?.toLowerCase();
-    const normalizedDominantFoot = dominant_foot?.toLowerCase();
-    const normalizedRelationship = parent_relationship?.toLowerCase();
-
-    // Update player record
-    const { data: playerData, error: playerError } = await adminSupabase
+    // Get player with all related data
+    const { data: player, error: playerError } = await supabase
       .from("players")
-      .update({
-        first_name,
-        last_name,
-        date_of_birth,
-        gender: normalizedGender,
-        photo_url: photo_url || null,
-        position: position || null,
-        dominant_foot: normalizedDominantFoot || null,
-        jersey_number: jersey_number ? parseInt(jersey_number) : null,
-        notes: notes || null,
-        blood_type: blood_type || null,
-        allergies: allergies || null,
-        medical_conditions: medical_conditions || null,
-        emergency_contact_name,
-        emergency_contact_phone,
-        emergency_contact_relationship,
-      })
+      .select(
+        `
+        *,
+        player_parents (
+          parent_user_id,
+          relationship,
+          users:parent_user_id (
+            id,
+            full_name
+          )
+        )
+      `
+      )
       .eq("id", playerId)
-      .select()
       .single();
 
     if (playerError) {
-      console.error("Player update error:", playerError);
-      throw new Error(`Failed to update player: ${playerError.message}`);
+      console.error("Error fetching player:", playerError);
+      return NextResponse.json(
+        { error: "Player not found" },
+        { status: 404 }
+      );
     }
 
-    // Update parent name in users table if provided
-    if (parent_full_name) {
-      // Get parent user ID from player_parents
-      const { data: parentRelation } = await adminSupabase
-        .from("player_parents")
-        .select("parent_user_id")
-        .eq("player_id", playerId)
+    // Check access permissions
+    let hasAccess = isSuperAdmin;
+
+    if (!hasAccess) {
+      // Check if user is club admin for this player's club
+      const isClubAdmin = roles?.some(
+        (r) => r.role === "club_admin" && r.club_id === player.club_id
+      );
+      hasAccess = isClubAdmin;
+    }
+
+    if (!hasAccess) {
+      // Check if user is a coach for any of the player's teams
+      const { data: coach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("user_id", user.id)
         .single();
 
-      if (parentRelation) {
-        const { error: parentUpdateError } = await adminSupabase
-          .from("users")
-          .update({
-            full_name: parent_full_name,
-          })
-          .eq("id", parentRelation.parent_user_id);
+      if (coach) {
+        // Get player's teams
+        const { data: playerTeams } = await supabase
+          .from("team_players")
+          .select("team_id")
+          .eq("player_id", playerId);
 
-        if (parentUpdateError) {
-          console.error("Parent update error:", parentUpdateError);
-          // Don't fail the whole operation if parent update fails
-        }
+        if (playerTeams && playerTeams.length > 0) {
+          const teamIds = playerTeams.map((t) => t.team_id);
 
-        // Update parent relationship
-        const { error: relationshipUpdateError } = await adminSupabase
-          .from("player_parents")
-          .update({
-            relationship: normalizedRelationship,
-          })
-          .eq("player_id", playerId)
-          .eq("parent_user_id", parentRelation.parent_user_id);
+          // Check if coach is assigned to any of these teams
+          const { data: coachTeams } = await supabase
+            .from("team_coaches")
+            .select("team_id")
+            .eq("coach_id", coach.id)
+            .eq("is_active", true)
+            .in("team_id", teamIds);
 
-        if (relationshipUpdateError) {
-          console.error("Relationship update error:", relationshipUpdateError);
-          // Don't fail the whole operation
+          hasAccess = coachTeams && coachTeams.length > 0;
         }
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      player: playerData,
-      message: "Player updated successfully",
-    });
-  } catch (error) {
-    console.error("Error updating player:", error);
-
-    // Handle different error types
-    let errorMessage = "Unknown error";
-
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === "object" && error !== null) {
-      const err = error as { message?: string; error_description?: string };
-      errorMessage = err.message || err.error_description || JSON.stringify(error);
-    } else {
-      errorMessage = String(error);
-    }
-
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: errorMessage,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /api/club/players/[playerId] - Delete (soft delete) a player
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ playerId: string }> }
-) {
-  try {
-    const { playerId } = await params;
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user has club_admin role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role, club_id")
-      .eq("user_id", user.id)
-      .in("role", ["super_admin", "club_admin"]);
-
-    if (!roles || roles.length === 0) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Get player to check club access
-    const { data: player } = await supabase
-      .from("players")
-      .select("club_id")
-      .eq("id", playerId)
-      .single();
-
-    if (!player) {
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
-    }
-
-    // Validate club access
-    const hasAccess =
-      roles.some((r) => r.role === "super_admin") ||
-      roles.some((r) => r.role === "club_admin" && r.club_id === player.club_id);
-
     if (!hasAccess) {
       return NextResponse.json(
-        { error: "You do not have access to this club" },
+        { error: "You do not have permission to view this player" },
         { status: 403 }
       );
     }
 
-    const adminSupabase = createAdminClient();
+    // Get player's teams with details
+    const { data: teamAssignments } = await supabase
+      .from("team_players")
+      .select(
+        `
+        id,
+        jersey_number,
+        joined_date,
+        left_date,
+        is_active,
+        teams:team_id (
+          id,
+          name,
+          age_group,
+          season
+        )
+      `
+      )
+      .eq("player_id", playerId);
 
-    // Soft delete: set is_active to false
-    const { error: deleteError } = await adminSupabase
-      .from("players")
-      .update({ is_active: false })
-      .eq("id", playerId);
+    // Transform parent data to get email from the RPC function
+    const parentsWithEmails = await Promise.all(
+      (player.player_parents || []).map(async (pp: any) => {
+        // Get email using RPC function
+        const { data: usersWithEmail } = await supabase.rpc(
+          "get_users_with_email"
+        );
 
-    if (deleteError) {
-      console.error("Player delete error:", deleteError);
-      throw new Error(`Failed to delete player: ${deleteError.message}`);
-    }
+        const userWithEmail = usersWithEmail?.find(
+          (u: any) => u.id === pp.parent_user_id
+        );
+
+        return {
+          id: pp.parent_user_id,
+          full_name: pp.users?.full_name,
+          email: userWithEmail?.email,
+          relationship: pp.relationship,
+        };
+      })
+    );
 
     return NextResponse.json({
-      success: true,
-      message: "Player deactivated successfully",
+      player: {
+        ...player,
+        parents: parentsWithEmails,
+        teams: teamAssignments || [],
+      },
     });
   } catch (error) {
-    console.error("Error deleting player:", error);
-
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === "object" && error !== null) {
-      const err = error as { message?: string; error_description?: string };
-      errorMessage = err.message || err.error_description || JSON.stringify(error);
-    } else {
-      errorMessage = String(error);
-    }
-
+    console.error("Error in player detail route:", error);
     return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: errorMessage,
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

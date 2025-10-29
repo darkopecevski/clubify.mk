@@ -1,6 +1,6 @@
 # Clubify.mk - Development TODO List
 
-**Last Updated:** 2025-10-28 (Phase 5.5 Squad Selection - COMPLETE! 🎉)
+**Last Updated:** 2025-10-29 (Phase 5.6 Match Results & Statistics - COMPLETE! 🎉)
 
 ## Development Principles
 
@@ -825,9 +825,13 @@
 - [x] Enter player statistics (goals, assists, cards, rating)
 - [x] Add player notes per match
 - [x] Integrate into match details pages
+- [x] **Display results in matches list table (Result column)**
+- [x] **Show match statistics on match details page**
+- [x] **Fix race condition in stats loading (merged fetch)**
 - [ ] Select MVP (deferred - future enhancement)
 - [ ] Match report/summary (deferred - future enhancement)
 - [x] Test: Enter results, save successfully ✅
+- [x] Test: View results in list and details pages ✅
 
 **Features Implemented:**
 - ✅ Match Results API (`/api/matches/[matchId]/results` GET & POST)
@@ -839,7 +843,7 @@
   - ✅ Yellow and Red cards
   - ✅ Player rating (0-10 scale)
   - ✅ Individual player notes
-- ✅ Loads existing stats for editing
+- ✅ Loads existing stats for editing (fixed race condition)
 - ✅ Updates match status to "completed"
 - ✅ Updates minutes_played in match_squads
 - ✅ Visual result indicator with color coding
@@ -847,8 +851,132 @@
 - ✅ "Enter Results" button on scheduled matches
 - ✅ Role-based access control
 - ✅ Data persistence in match_statistics table
+- ✅ **Result column in matches list showing scores (3 - 1)**
+- ✅ **Match Statistics section on details page** with:
+  - ✅ Goal Scorers (sorted by goals, shows assists and rating)
+  - ✅ Assists (for players without goals)
+  - ✅ Disciplinary (yellow/red cards with visual indicators)
+  - ✅ Top Performers (rating ≥ 7.0, sorted by rating)
+  - ✅ Edit Results button for completed matches
+  - ✅ Empty state when no statistics recorded
 
-**Deliverable:** ✅ Match results tracking complete!
+**Deliverable:** ✅ Match results tracking with full visibility COMPLETE!
+
+---
+
+## Phase 5.7: Enhancements & Refinements 📝
+
+### 5.7.1 Players List Enhancements 📝
+**For Club Admin & Super Admin** (`/club/[clubId]/players`)
+- [ ] Add team filter dropdown
+  - [ ] Show "All Teams" option
+  - [ ] List all teams in club
+  - [ ] Filter players by selected team
+- [ ] Add status filter (Active/Inactive/All)
+- [ ] Update players table to show team assignments
+  - [ ] Replace "Teams" count column with team badges/names
+  - [ ] Show multiple team badges if player is on multiple teams
+  - [ ] Color-coded team badges
+- [ ] Add search functionality (by name)
+- [ ] Test: Filters work correctly, team badges display
+
+**Deliverable:** Enhanced players list with filtering and team visibility
+
+### 5.7.2 Player Details Page Enhancements 📝
+**Training Attendance Section:**
+- [ ] Add "Training Attendance" section to player detail page
+- [ ] Show attendance statistics (last 30 days, last 90 days, all time)
+- [ ] Display attendance breakdown (Present, Late, Absent, Excused, Injured)
+- [ ] Color-coded attendance percentage badge
+- [ ] Recent attendance history table (last 10 sessions)
+- [ ] Link to full attendance history
+
+**Match Attendance & Statistics Section:**
+- [ ] Add "Match Statistics" section to player detail page
+- [ ] Show matches played count (total, this season)
+- [ ] Display match attendance vs matches scheduled
+- [ ] Show player statistics summary:
+  - [ ] Total goals, assists
+  - [ ] Yellow/red cards
+  - [ ] Average rating
+  - [ ] Minutes played
+- [ ] Recent matches table with individual stats
+- [ ] Link to full match history
+
+**API Endpoints:**
+- [ ] GET `/api/players/[playerId]/training-attendance` - Training attendance stats
+- [ ] GET `/api/players/[playerId]/match-statistics` - Match stats summary
+
+**Deliverable:** Comprehensive player profile with attendance and match data
+
+### 5.7.3 Coach Access to Players 📝
+**Players List for Coaches:**
+- [ ] Create `/coach/players` page
+- [ ] Show only players from teams the coach is assigned to
+- [ ] Same filtering as club admin view (team, status, search)
+- [ ] Same table layout with team badges
+- [ ] Access control: coach sees only their teams' players
+
+**Player Details for Coaches:**
+- [ ] Allow coaches to view player detail pages
+- [ ] Route: `/coach/players/[playerId]`
+- [ ] Same sections as club admin view
+- [ ] Access control: coach can only view players from their teams
+
+**Add Player to Team (Coach):**
+- [ ] Add "Add Player" button on coach's team detail page
+- [ ] Modal to select from existing club players
+- [ ] Or link to create new player form
+- [ ] Assign jersey number and position
+- [ ] Access control: coach can only add to their assigned teams
+- [ ] API: Use existing `/api/club/teams/[teamId]/players` endpoint
+
+**API Updates:**
+- [ ] Update `/api/club/players` to filter by coach's teams
+- [ ] Add coach permission checks to player detail endpoints
+
+**Deliverable:** Coaches can view and manage players for their teams
+
+### 5.7.4 Training Details Page 📝
+**Create Training Details Page:**
+- [ ] Create route: `/coach/training/[sessionId]`
+- [ ] Also accessible from club admin: `/club/[clubId]/training/[sessionId]`
+- [ ] Replace Session Detail Modal with full page (or keep modal + add page)
+
+**Training Details Sections:**
+- [ ] Header with training info (date, time, team, location, duration)
+- [ ] Status badge (completed, scheduled, cancelled)
+- [ ] Action buttons (Edit, Cancel, Mark Attendance)
+
+**Attendance Section:**
+- [ ] Full attendance roster table (not modal)
+- [ ] Mark attendance inline with save button
+- [ ] Show attendance summary (present, absent, late, etc.)
+- [ ] Attendance statistics for this session
+
+**Training Notes/Recapitulation Section:**
+- [ ] Rich text area for training notes
+- [ ] What was trained, drills, focus areas
+- [ ] Save notes button
+- [ ] Show who added notes and when
+- [ ] Edit/delete notes (coach, club_admin, super_admin only)
+
+**Database:**
+- [ ] Add `notes` TEXT column to `training_sessions` table
+- [ ] Or create separate `training_notes` table with:
+  - [ ] id, training_session_id, content, created_by, created_at, updated_at
+  - [ ] Allows multiple notes per session (log-style)
+
+**API Endpoints:**
+- [ ] GET `/api/training/[sessionId]` - Get full training details
+- [ ] PATCH `/api/training/[sessionId]/notes` - Save training notes
+
+**Access Control:**
+- [ ] Coaches can view/edit notes for their teams only
+- [ ] Club admins can view/edit all notes for their club
+- [ ] Super admins can view/edit all notes
+
+**Deliverable:** Comprehensive training details page with attendance and notes
 
 ---
 
@@ -1368,19 +1496,38 @@
 
 ## Current Focus
 
-**Now:** Phase 5.4 📝 **Match Management**
+**Now:** ✅ Phase 5.6 COMPLETE! 🎉 **Match Results & Statistics with Full Visibility**
 
 **Next Steps (in priority order):**
-1. **Phase 5.4** - Match Management (schedule matches, opponents, venues)
-2. **Phase 5.5** - Squad Selection (select players for matches)
-3. **Phase 5.6** - Match Results & Statistics (record scores, player stats)
+1. **Phase 5.7** - Enhancements & Refinements (high priority UX improvements)
+   - 5.7.1 - Players list enhancements (team filter, status filter, show team badges)
+   - 5.7.2 - Player details enhancements (training attendance, match statistics)
+   - 5.7.3 - Coach access to players (list, details, add to team)
+   - 5.7.4 - Training details page (attendance, notes/recapitulation)
+2. **Phase 6** - Parent Portal (view player info, payments, schedules)
+3. **Phase 8** - Payment Management (subscription fees, discounts, payment tracking)
 4. **5.2.1 Enhancement** - Edit recurring sessions (single vs all occurrences)
 5. **5.2.1 Enhancement** - Recurring patterns management page
 6. **4.5 Enhancement** - Jersey number editing (deferred, lower priority)
-7. **Phase 6** - Parent Portal (view player info, payments, schedules)
-7. **Phase 8** - Payment Management (subscription fees, discounts, payment tracking)
+7. **Phase 7** - Player Portal (simple dashboard, profile view)
 
 **Completed Recently:**
+- ✅ **Phase 5.6 - Match Results & Statistics** (FULLY COMPLETE!) 🎉
+  - Match results entry with comprehensive player statistics
+  - Result column in matches list showing scores
+  - Match Statistics section on details page showing:
+    - Goal scorers with assists and ratings
+    - Players with assists only
+    - Disciplinary records (yellow/red cards)
+    - Top performers (rating ≥ 7.0)
+  - Fixed race condition in stats loading
+  - Applied to both coach and club admin portals
+- ✅ **Phase 5.5 - Squad Selection** (FULLY COMPLETE!) 🎉
+  - Squad selection for matches
+  - Starting 11 designation
+  - Jersey number assignment
+  - Dedicated match details pages
+  - Works for both coach and club admin
 - ✅ **Phase 5.3 - Attendance Tracking** (FULLY COMPLETE!) 🎉
   - Mark attendance from calendar and list view
   - Attendance overview page with statistics
@@ -1481,6 +1628,6 @@
 
 ---
 
-**Last Review:** 2025-10-27
-**Progress:** Phase 4.6 FULLY COMPLETE! (Coach Management with Team Assignments) 🎉
-**Next Milestone:** Phase 5 - Coach Portal OR Phase 4.5 Enhancement - Jersey Number Editing
+**Last Review:** 2025-10-29
+**Progress:** Phase 5.6 FULLY COMPLETE! (Match Results & Statistics with Full Visibility) 🎉
+**Next Milestone:** Phase 6 - Parent Portal OR Phase 8 - Payment Management

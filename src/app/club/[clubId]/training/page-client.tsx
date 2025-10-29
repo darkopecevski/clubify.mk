@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   Calendar as CalendarIcon,
@@ -47,15 +47,18 @@ type TrainingSession = {
 };
 
 export default function TrainingListClient({
+  clubId,
   teams,
   upcomingSessions,
   pastSessions,
 }: {
+  clubId: string;
   teams: Team[];
   upcomingSessions: TrainingSession[];
   pastSessions: TrainingSession[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -88,6 +91,23 @@ export default function TrainingListClient({
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Handle edit from sessionStorage (when navigating from details page)
+  useEffect(() => {
+    const editSessionId = sessionStorage.getItem('editSessionId');
+    if (editSessionId) {
+      // Find the session to edit
+      const session = [...upcomingSessions, ...pastSessions].find(
+        (s) => s.id === editSessionId
+      );
+      if (session) {
+        handleEditSession(session);
+        // Clear the sessionStorage
+        sessionStorage.removeItem('editSessionId');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Form state
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -504,8 +524,7 @@ export default function TrainingListClient({
         <TrainingCalendar
           sessions={[...upcomingSessions, ...pastSessions]}
           onSessionClick={(session) => {
-            setSelectedSession(session);
-            setShowDetailModal(true);
+            router.push(`/club/${clubId}/training/${session.id}`);
           }}
           onCreateSession={(date, time) => {
             // Open schedule modal with pre-filled date and time
@@ -556,7 +575,8 @@ export default function TrainingListClient({
               {filteredUpcoming.map((session) => (
                 <div
                   key={session.id}
-                  className="p-6 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  onClick={() => router.push(`/club/${clubId}/training/${session.id}`)}
+                  className="p-6 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -595,21 +615,30 @@ export default function TrainingListClient({
                     </div>
                     <div className="ml-4 flex items-center gap-2">
                       <button
-                        onClick={() => handleMarkAttendance(session)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkAttendance(session);
+                        }}
                         className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
                         title="Mark Attendance"
                       >
                         <UserCheck className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleEditSession(session)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditSession(session);
+                        }}
                         className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-300"
                         title="Edit Session"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(session)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(session);
+                        }}
                         className="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                         title="Delete Session"
                       >
@@ -647,7 +676,8 @@ export default function TrainingListClient({
             {filteredPast.map((session) => (
               <div
                 key={session.id}
-                className="p-6 opacity-75 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                onClick={() => router.push(`/club/${clubId}/training/${session.id}`)}
+                className="p-6 opacity-75 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

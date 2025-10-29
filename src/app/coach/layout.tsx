@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Sun,
   Moon,
+  UserCircle,
 } from "lucide-react";
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Attendance", href: "/coach/attendance", icon: ClipboardCheck },
   { name: "Matches", href: "/coach/matches", icon: Trophy },
   { name: "My Teams", href: "/coach/teams", icon: Users },
+  { name: "Players", href: "/coach/players", icon: UserCircle },
 ];
 
 export default function CoachLayout({

@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useUserRole } from "@/hooks/use-user-role";
-import { Trash2, Plus, X, Calendar, TrendingUp, Target, Award, Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, TrendingUp, Target, Award, Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
 
 type Player = {
   id: string;
@@ -43,123 +40,46 @@ type TeamAssignment = {
   is_active: boolean;
 };
 
-type ParentData = {
-  id: string;
-  relationship: string;
-  parent_user_id: string;
-  users: {
-    id: string;
-    full_name: string;
-  } | null;
-};
-
-type TeamData = {
-  id: string;
-  team_id: string;
-  joined_at: string;
-  is_active: boolean;
-  teams: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-export default function PlayerProfilePage({
-  clubId,
+export default function CoachPlayerProfilePage({
   playerId,
 }: {
-  clubId: string;
   playerId: string;
 }) {
-  const router = useRouter();
-  const { isSuperAdmin, isClubAdmin } = useUserRole();
   const [player, setPlayer] = useState<Player | null>(null);
   const [parents, setParents] = useState<Parent[]>([]);
   const [teams, setTeams] = useState<TeamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [showAssignTeamModal, setShowAssignTeamModal] = useState(false);
-  const [availableTeams, setAvailableTeams] = useState<{ id: string; name: string; age_group: string }[]>([]);
-  const [assigning, setAssigning] = useState(false);
-  const [showRemoveTeamModal, setShowRemoveTeamModal] = useState(false);
-  const [teamToRemove, setTeamToRemove] = useState<{ id: string; name: string } | null>(null);
-  const [removingFromTeam, setRemovingFromTeam] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [trainingAttendance, setTrainingAttendance] = useState<any>(null);
   const [matchStatistics, setMatchStatistics] = useState<any>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const canEdit = isSuperAdmin() || isClubAdmin(clubId);
-
   const fetchPlayerData = useCallback(async () => {
-    const supabase = createClient();
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Fetch player data
-    const { data: playerData, error: playerError } = await supabase
-      .from("players")
-      .select("*")
-      .eq("id", playerId)
-      .single();
+      // Fetch player data from club API (works with coach permissions)
+      const playerResponse = await fetch(`/api/club/players/${playerId}`);
 
-    if (playerError || !playerData) {
-      console.error("Error fetching player:", playerError);
+      if (!playerResponse.ok) {
+        if (playerResponse.status === 403) {
+          throw new Error("You don't have permission to view this player");
+        }
+        throw new Error("Failed to fetch player data");
+      }
+
+      const playerData = await playerResponse.json();
+      setPlayer(playerData.player);
+      setParents(playerData.parents || []);
+      setTeams(playerData.teams || []);
+    } catch (err) {
+      console.error("Error fetching player:", err);
+      setError(err instanceof Error ? err.message : "Failed to load player data");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setPlayer(playerData);
-
-    // Fetch parent data
-    const { data: parentsData } = await supabase
-      .from("player_parents")
-      .select(`
-        id,
-        relationship,
-        parent_user_id,
-        users!player_parents_parent_user_id_fkey (
-          id,
-          full_name
-        )
-      `)
-      .eq("player_id", playerId);
-
-    if (parentsData) {
-      const formattedParents = parentsData.map((p: ParentData) => ({
-        id: p.parent_user_id,
-        full_name: p.users?.full_name || "Unknown",
-        relationship: p.relationship,
-      }));
-      setParents(formattedParents);
-    }
-
-    // Fetch team assignments
-    const { data: teamsData } = await supabase
-      .from("team_players")
-      .select(`
-        id,
-        team_id,
-        joined_at,
-        is_active,
-        teams (
-          id,
-          name
-        )
-      `)
-      .eq("player_id", playerId);
-
-    if (teamsData) {
-      const formattedTeams = teamsData.map((t: TeamData) => ({
-        id: t.id,
-        team_id: t.team_id,
-        team_name: t.teams?.name || "Unknown Team",
-        joined_at: t.joined_at,
-        is_active: t.is_active,
-      }));
-      setTeams(formattedTeams);
-    }
-
-    setLoading(false);
   }, [playerId]);
 
   const fetchTrainingAttendance = async () => {
@@ -198,102 +118,26 @@ export default function PlayerProfilePage({
     fetchMatchStatistics();
   }, [fetchPlayerData, playerId]);
 
-  const fetchAvailableTeams = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("teams")
-      .select("id, name, age_group")
-      .eq("club_id", clubId)
-      .eq("is_active", true)
-      .order("name");
-
-    if (data) {
-      // Filter out teams player is already assigned to
-      const assignedTeamIds = teams.map((t) => t.team_id);
-      const available = data.filter((team) => !assignedTeamIds.includes(team.id));
-      setAvailableTeams(available);
-    }
-  };
-
-  const handleAssignTeam = async (teamId: string) => {
-    setAssigning(true);
-    try {
-      const response = await fetch(`/api/club/teams/${teamId}/players`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player_id: playerId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to assign player to team");
-      }
-
-      // Refresh player data
-      await fetchPlayerData();
-      setShowAssignTeamModal(false);
-    } catch (error) {
-      console.error("Error assigning player to team:", error);
-      alert(error instanceof Error ? error.message : "Failed to assign player to team");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleRemoveFromTeam = async () => {
-    if (!teamToRemove) return;
-
-    setRemovingFromTeam(true);
-    try {
-      const response = await fetch(`/api/club/team-players/${teamToRemove.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to remove player from team");
-      }
-
-      // Refresh player data
-      await fetchPlayerData();
-      setShowRemoveTeamModal(false);
-      setTeamToRemove(null);
-    } catch (error) {
-      console.error("Error removing player from team:", error);
-      alert(error instanceof Error ? error.message : "Failed to remove player from team");
-    } finally {
-      setRemovingFromTeam(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!player) return;
-
-    setDeleting(true);
-    try {
-      const response = await fetch(`/api/club/players/${playerId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete player");
-      }
-
-      // Redirect to players list
-      router.push(`/club/${clubId}/players`);
-    } catch (error) {
-      console.error("Error deleting player:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete player");
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-gray-600 dark:text-gray-400">Loading player profile...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+          <Link
+            href="/coach/players"
+            className="mt-4 inline-block text-green-600 hover:text-green-700 dark:text-green-400"
+          >
+            Back to Players
+          </Link>
+        </div>
       </div>
     );
   }
@@ -304,7 +148,7 @@ export default function PlayerProfilePage({
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">Player not found</p>
           <Link
-            href={`/club/${clubId}/players`}
+            href="/coach/players"
             className="mt-4 inline-block text-green-600 hover:text-green-700 dark:text-green-400"
           >
             Back to Players
@@ -329,25 +173,8 @@ export default function PlayerProfilePage({
           </p>
         </div>
         <div className="flex gap-3">
-          {canEdit && (
-            <>
-              <Link
-                href={`/club/${clubId}/players/${playerId}/edit`}
-                className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-              >
-                Edit Player
-              </Link>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </button>
-            </>
-          )}
           <Link
-            href={`/club/${clubId}/players`}
+            href="/coach/players"
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             Back to Players
@@ -512,18 +339,6 @@ export default function PlayerProfilePage({
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Team Assignments
           </h2>
-          {canEdit && (
-            <button
-              onClick={() => {
-                fetchAvailableTeams();
-                setShowAssignTeamModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700"
-            >
-              <Plus className="h-4 w-4" />
-              Assign to Team
-            </button>
-          )}
         </div>
         {teams.length > 0 ? (
           <div className="space-y-2">
@@ -533,12 +348,9 @@ export default function PlayerProfilePage({
                 className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
               >
                 <div className="flex-1">
-                  <Link
-                    href={`/club/${clubId}/teams/${team.team_id}`}
-                    className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400"
-                  >
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {team.team_name}
-                  </Link>
+                  </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Joined: {new Date(team.joined_at).toLocaleDateString()}
                   </p>
@@ -553,18 +365,6 @@ export default function PlayerProfilePage({
                   >
                     {team.is_active ? "Active" : "Inactive"}
                   </span>
-                  {canEdit && (
-                    <button
-                      onClick={() => {
-                        setTeamToRemove({ id: team.id, name: team.team_name });
-                        setShowRemoveTeamModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      title="Remove from team"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
@@ -984,122 +784,6 @@ export default function PlayerProfilePage({
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Notes</h2>
           <p className="text-sm text-gray-700 dark:text-gray-300">{player.notes}</p>
-        </div>
-      )}
-
-      {/* Remove from Team Confirmation Modal */}
-      {showRemoveTeamModal && teamToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Remove from Team
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Are you sure you want to remove{" "}
-              <span className="font-semibold">
-                {player?.first_name} {player?.last_name}
-              </span>{" "}
-              from{" "}
-              <span className="font-semibold">{teamToRemove.name}</span>?
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={handleRemoveFromTeam}
-                disabled={removingFromTeam}
-                className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {removingFromTeam ? "Removing..." : "Remove"}
-              </button>
-              <button
-                onClick={() => {
-                  setShowRemoveTeamModal(false);
-                  setTeamToRemove(null);
-                }}
-                disabled={removingFromTeam}
-                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Assign to Team Modal */}
-      {showAssignTeamModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Assign to Team
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Select a team to assign {player?.first_name} to:
-            </p>
-            <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
-              {availableTeams.length > 0 ? (
-                availableTeams.map((team) => (
-                  <button
-                    key={team.id}
-                    onClick={() => handleAssignTeam(team.id)}
-                    disabled={assigning}
-                    className="flex w-full items-center justify-between rounded-md border border-gray-200 p-3 text-left hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-700"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{team.age_group}</p>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  No available teams. Player is already assigned to all active teams.
-                </p>
-              )}
-            </div>
-            <div className="mt-6">
-              <button
-                onClick={() => setShowAssignTeamModal(false)}
-                disabled={assigning}
-                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Delete Player
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">
-                {player.first_name} {player.last_name}
-              </span>
-              ? This will deactivate the player and they will no longer appear in active lists.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleting ? "Deleting..." : "Delete Player"}
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

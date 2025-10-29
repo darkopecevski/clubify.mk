@@ -1,6 +1,160 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// GET /api/coach/training/[sessionId] - Get training session details
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ sessionId: string }> }
+) {
+  try {
+    const { sessionId } = await params;
+    const supabase = await createClient();
+
+    // Check authentication
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check user roles
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, club_id")
+      .eq("user_id", user.id)
+      .in("role", ["super_admin", "club_admin", "coach"]);
+
+    if (!roles || roles.length === 0) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Get training session with full details
+    const { data: session, error: sessionError } = await supabase
+      .from("training_sessions")
+      .select(
+        `
+        id,
+        team_id,
+        recurrence_id,
+        session_date,
+        start_time,
+        duration_minutes,
+        location,
+        focus_areas,
+        notes,
+        is_cancelled,
+        cancellation_reason,
+        created_at,
+        updated_at,
+        teams:team_id (
+          id,
+          name,
+          age_group,
+          season,
+          club_id,
+          clubs:club_id (
+            id,
+            name
+          )
+        )
+      `
+      )
+      .eq("id", sessionId)
+      .single();
+
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: "Training session not found" },
+        { status: 404 }
+      );
+    }
+
+    const teamData = session.teams as {
+      id: string;
+      name: string;
+      age_group: string | null;
+      season: string | null;
+      club_id: string;
+      clubs: { id: string; name: string } | null;
+    };
+
+    const clubId = teamData.club_id;
+
+    // Check access based on role
+    const isSuperAdmin = roles.some((r) => r.role === "super_admin");
+    const isClubAdmin = roles.some(
+      (r) => r.role === "club_admin" && r.club_id === clubId
+    );
+
+    let isCoach = false;
+    if (roles.some((r) => r.role === "coach")) {
+      // Check if coach is assigned to this team
+      const { data: coach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (coach) {
+        const { data: assignment } = await supabase
+          .from("team_coaches")
+          .select("id")
+          .eq("coach_id", coach.id)
+          .eq("team_id", session.team_id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        isCoach = !!assignment;
+      }
+    }
+
+    if (!isSuperAdmin && !isClubAdmin && !isCoach) {
+      return NextResponse.json(
+        { error: "You do not have access to this training session" },
+        { status: 403 }
+      );
+    }
+
+    // Get recurrence pattern info if applicable
+    let recurrencePattern = null;
+    if (session.recurrence_id) {
+      const { data: pattern } = await supabase
+        .from("training_recurrences")
+        .select("day_of_week, is_active")
+        .eq("id", session.recurrence_id)
+        .single();
+
+      if (pattern) {
+        recurrencePattern = pattern;
+      }
+    }
+
+    return NextResponse.json({
+      session: {
+        ...session,
+        recurrence_pattern: recurrencePattern,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching training session:", error);
+
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: errorMessage,
+      },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH /api/coach/training/[sessionId] - Update a training session
 export async function PATCH(
   request: Request,

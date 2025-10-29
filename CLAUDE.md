@@ -1128,6 +1128,157 @@ async function DELETE(req: Request) {
 
 ---
 
+---
+
+## Phase 5: Coach Portal - Match Management (✅ Complete)
+
+### 5.4 Match Management ✅
+
+**Match Scheduling:**
+- Create/edit/delete matches
+- Select opponent (away team name), date, time, venue
+- Competition type field (friendly, league, tournament, cup)
+- Status tracking: scheduled, completed, cancelled, live
+- Soft delete (status = "cancelled")
+- Match Detail Modal with view/edit/cancel actions
+
+**Match Details Pages:**
+- Coach view: `/coach/matches/[matchId]`
+- Club admin view: `/club/[clubId]/matches/[matchId]`
+- Full match information display
+- Actions: Edit Match, Cancel Match, Select Squad, Enter Results
+- Squad section (if selected)
+- Match statistics section (if completed)
+
+**API Endpoints:**
+- GET `/api/matches` - List matches with team/club filters
+- POST `/api/matches` - Create new match
+- GET `/api/matches/[matchId]` - Get match details
+- PATCH `/api/matches/[matchId]` - Update match
+- DELETE `/api/matches/[matchId]` - Cancel match (soft delete)
+
+**Matches List Features:**
+- Stats cards: Total, Upcoming, Completed matches
+- Team filter dropdown (coach sees only their teams)
+- Upcoming/Past tabs with date-based filtering
+- Status badges with color coding
+- **Result column showing scores** for completed matches (e.g., "3 - 1")
+- Table columns: Date & Time, Team, Opponent, Location, Competition, Result, Status, Actions
+- Clickable rows navigate to match details page
+
+**Components Created:**
+- `/src/app/coach/matches/page-client.tsx` - Matches list (coach)
+- `/src/app/coach/matches/[matchId]/page-client.tsx` - Match details (coach)
+- `/src/app/club/[clubId]/matches/page-client.tsx` - Matches list (club admin)
+- `/src/app/club/[clubId]/matches/[matchId]/page-client.tsx` - Match details (club admin)
+- `/src/components/matches/ScheduleMatchModal.tsx` - Create match modal
+- `/src/components/matches/EditMatchModal.tsx` - Edit match modal
+
+---
+
+### 5.5 Squad Selection ✅
+
+**Squad Selection Modal:**
+- Multi-select interface with checkboxes
+- Designate Starting 11 (separate checkbox column)
+- Assign jersey numbers per match (1-99)
+- Position override per player
+- Optional notes per player
+- Stats bar: Total Selected, Starting 11, Subs
+- Warning when starting 11 ≠ 11 players
+- Accessible from Match Detail Modal
+
+**Squad Display on Details Page:**
+- Prominent squad section with Starting 11 and Substitutes
+- Jersey numbers displayed with player names
+- Position information per player
+- Color-coded player cards (green for starting, gray for subs)
+- Stats summary (total selected, starting 11, subs count)
+- "Edit Squad" button to modify selection
+
+**API Endpoints:**
+- GET `/api/matches/[matchId]/squad` - Get squad for match
+- POST `/api/matches/[matchId]/squad` - Save/update squad selection
+
+**Components Created:**
+- `/src/components/matches/SquadSelectionModal.tsx` - Squad selection UI
+
+**Database:**
+- `match_squads` table stores player selections with:
+  - is_starting (boolean)
+  - jersey_number (1-99)
+  - position (override)
+  - notes (per player)
+  - minutes_played (populated after match)
+
+---
+
+### 5.6 Match Results & Statistics ✅ COMPLETE
+
+**Match Results Entry:**
+- Comprehensive MatchResultsModal component
+- Score entry for both teams (home/away)
+- Auto-calculate match result (Win/Loss/Draw)
+- Visual result indicator with color coding
+- Player statistics entry table with all squad members
+- Updates match status to "completed"
+- Loads existing statistics for editing (fixed race condition)
+
+**Player Statistics Tracking:**
+- Goals and Assists (number inputs)
+- Yellow Cards and Red Cards (number inputs with constraints)
+- Player Rating (0-10 scale, decimal allowed)
+- Individual player notes (textarea)
+- Saves to `match_statistics` table
+- Updates `minutes_played` in `match_squads`
+
+**Match Results Visibility:**
+- **Result Column in Matches List**:
+  - Shows score (e.g., "3 - 1") for completed matches
+  - Shows "-" for scheduled/cancelled matches
+  - Center-aligned for better readability
+  - Applied to both coach and club admin portals
+
+- **Match Statistics Section on Details Page**:
+  - Only shown when match status = "completed"
+  - Four organized sections:
+    1. **Goal Scorers**: Players with goals, sorted by goals desc, shows assists and rating
+    2. **Assists**: Players with assists but no goals, sorted by assists desc
+    3. **Disciplinary**: Players with yellow/red cards, visual card indicators
+    4. **Top Performers**: Players with rating ≥ 7.0, sorted by rating desc
+  - Each section has distinct color scheme (green, blue, orange, purple)
+  - Empty state when no statistics recorded
+  - "Edit Results" button to modify statistics
+
+**Bug Fixes:**
+- Fixed race condition in stats loading by merging `fetchSquad` and `fetchExistingStats`
+- Now uses single `fetchSquadAndStats()` function with `Promise.all`
+- Properly merges existing statistics with squad roster
+- Preserves previously entered values when editing results
+
+**API Endpoints:**
+- GET `/api/matches/[matchId]/results` - Fetch match statistics with player details
+- POST `/api/matches/[matchId]/results` - Save match results and player statistics
+
+**Components:**
+- `/src/components/matches/MatchResultsModal.tsx` - Full-featured results entry
+- Match details pages display statistics section for completed matches
+
+**Permission System:**
+- Super admin: full access to all matches
+- Club admin: access to matches for their club's teams
+- Coach: access to matches for their assigned teams
+- Validates permissions on both frontend and backend
+
+**Technical Details:**
+- Deletes existing statistics before inserting new ones (upsert pattern)
+- All values default to 0 or null appropriately
+- Form validation ensures data integrity
+- Dark mode support throughout
+- Color-coded result indicator (green = win, red = loss, gray = draw)
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**
