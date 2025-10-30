@@ -64,7 +64,7 @@ export async function GET(request: Request) {
       .from("team_players")
       .select("team_id, player_id")
       .in("player_id", childIds)
-      .is("left_date", null);
+      .is("left_at", null);
 
     const teamIds = [...new Set(teamPlayers?.map((tp) => tp.team_id) || [])];
 
@@ -115,23 +115,27 @@ export async function GET(request: Request) {
         `
         id,
         match_date,
-        match_time,
+        start_time,
         away_team_name,
-        venue,
-        competition_type,
-        teams:team_id (
+        location,
+        competition,
+        teams:home_team_id (
           id,
           name,
-          age_group
+          age_group,
+          clubs:club_id (
+            id,
+            name
+          )
         )
       `
       )
-      .in("team_id", teamIds)
+      .in("home_team_id", teamIds)
       .gte("match_date", today)
       .lte("match_date", nextWeek)
       .neq("status", "cancelled")
       .order("match_date", { ascending: true })
-      .order("match_time", { ascending: true })
+      .order("start_time", { ascending: true })
       .limit(5);
 
     // Get recent attendance (last 10 records)

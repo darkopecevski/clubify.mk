@@ -78,7 +78,7 @@ export async function GET() {
       `
       )
       .in("player_id", playerIds)
-      .is("left_date", null); // Only active team assignments
+      .is("left_at", null); // Only active team assignments
 
     // Group teams by player
     const playerTeamsMap: Record<string, Array<{ id: string; name: string; age_group: string | null }>> = {};

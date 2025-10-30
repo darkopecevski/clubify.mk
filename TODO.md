@@ -1043,13 +1043,27 @@
 
 ## Phase 8: Payment Management
 
-### 8.1 Subscription Fee Management 📝
-- [ ] Create subscription fees list per team
-- [ ] Set/update monthly fee for team
-- [ ] Track fee history (effective dates)
-- [ ] Test: Change fee, verify historical tracking
+### 8.1 Subscription Fee Management ✅ COMPLETE
+- [x] Create subscription fees list per team
+- [x] Set/update monthly fee for team
+- [x] Track fee history (effective dates)
+- [x] Test: Change fee, verify historical tracking
+- [x] Show most recent fee (current or scheduled)
+- [x] Statistics cards (Total Teams, Teams with Fees, Monthly Revenue)
+- [x] "Generate Payments" button
 
-**Deliverable:** Subscription fee management
+**Routes:**
+- `/club/[clubId]/payments/fees` - Subscription fees management
+- `/club/[clubId]/payments` - Redirects to fees
+
+**API Endpoints:**
+- `GET /api/club/subscription-fees` - Fetch teams with fees
+- `POST /api/club/subscription-fees` - Create new fee
+- `PATCH /api/club/subscription-fees` - Update fee
+
+**Deliverable:** ✅ Subscription fee management complete
+
+---
 
 ### 8.2 Discount Management 📝
 - [ ] Create discounts list per player
@@ -1058,30 +1072,67 @@
 - [ ] Select reason (sibling, hardship, merit, other)
 - [ ] Set effective/end dates
 - [ ] Remove discount
+- [ ] Update payment generation to apply discounts
 - [ ] Test: Apply discount, verify payment calculations
 
 **Deliverable:** Discount management
 
-### 8.3 Payment Record Generation 📝
-- [ ] Create Edge Function to generate monthly payments
-- [ ] Run on 1st of each month (scheduled)
-- [ ] Generate payment record for each active player
-- [ ] Calculate amount due (fee - discount)
-- [ ] Set due date (e.g., 5th of month)
-- [ ] Test: Manually trigger, verify records created
+---
 
-**Deliverable:** Auto payment generation
+### 8.3 Payment Record Generation ✅ COMPLETE
+- [x] Create manual generation endpoint (button-triggered)
+- [x] Month/Year selection
+- [x] Generate payment record for each active player
+- [x] Calculate amount due (from subscription fee)
+- [x] Set due date (5th of month)
+- [x] Prevent duplicates (upsert with ignoreDuplicates)
+- [x] Warn about teams without fees
+- [x] Test: Generate payments, verify records created
 
-### 8.4 Payment Tracking (Club Admin) 📝
-- [ ] Create payment records list (filterable)
-- [ ] Filter by status, team, month
-- [ ] Mark payment as paid
-- [ ] Record payment method and date
-- [ ] Add payment notes
-- [ ] Auto-update status (unpaid → overdue)
-- [ ] Test: Mark paid, verify status changes
+**Technical Implementation:**
+- Uses `upsert` with `onConflict` and `ignoreDuplicates: true`
+- Avoids RLS permission issues
+- Scalable for 1000s of players (can add batching later)
 
-**Deliverable:** Payment tracking for club admins
+**Future Enhancement:**
+- [ ] Netlify Scheduled Function for automatic monthly generation
+
+**API Endpoint:**
+- `POST /api/club/payments/generate` - Generate monthly payment records
+
+**Deliverable:** ✅ Manual payment generation complete
+
+---
+
+### 8.4 Payment Tracking (Club Admin) ✅ COMPLETE
+- [x] Create payment records list (filterable)
+- [x] Filter by status, team, month, search by player
+- [x] Statistics cards (Total Due, Collected, Outstanding, Collection Rate)
+- [x] Mark payment as paid with full details
+- [x] Record payment method, date, transaction reference, notes
+- [x] Support partial payments
+- [x] Auto-update status (unpaid → overdue)
+- [x] Color-coded status badges
+- [x] Test: Mark paid, verify status changes
+
+**Routes:**
+- `/club/[clubId]/payments/records` - Payment records list
+- Link from fees page: "View Payment Records" button
+
+**API Endpoints:**
+- `GET /api/club/payments` - Fetch payment records with filters
+- `PATCH /api/club/payments/[paymentId]` - Mark as paid
+
+**Status Auto-Calculation:**
+- Paid: amount_paid >= amount_due (green)
+- Partial: 0 < amount_paid < amount_due (orange)
+- Unpaid: amount_paid = 0 and not past due (yellow)
+- Overdue: unpaid and past due_date (red)
+- Waived (gray)
+
+**Deliverable:** ✅ Payment tracking for club admins complete
+
+---
 
 ### 8.5 Payment Tracking (Coach Portal) 📝
 **Purpose:** Allow coaches to view and manage payment status for players in their teams

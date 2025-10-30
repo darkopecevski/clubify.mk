@@ -38,11 +38,16 @@ type TrainingSession = {
 type Match = {
   id: string;
   match_date: string;
-  match_time: string;
+  start_time: string;
   away_team_name: string;
-  venue: string | null;
-  competition_type: string;
-  teams: { id: string; name: string; age_group: string | null };
+  location: string | null;
+  competition: string;
+  teams: {
+    id: string;
+    name: string;
+    age_group: string | null;
+    clubs: { id: string; name: string } | null;
+  };
 };
 
 type AttendanceRecord = {
@@ -210,6 +215,59 @@ export default function ParentDashboardClient() {
         </p>
       </div>
 
+      {/* Child Info Card (when single child selected) */}
+      {selectedChild && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-start gap-4">
+            {selectedChild.photo_url ? (
+              <img
+                src={selectedChild.photo_url}
+                alt={selectedChild.first_name}
+                className="h-16 w-16 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                <UserCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+              </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {selectedChild.first_name} {selectedChild.last_name}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Age {calculateAge(selectedChild.date_of_birth)} • {selectedChild.gender}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {selectedChild.club && (
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 dark:bg-blue-900/20">
+                    <Trophy className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      {selectedChild.club.name}
+                    </span>
+                  </div>
+                )}
+                {selectedChild.teams && selectedChild.teams.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedChild.teams.map((team) => (
+                      <div
+                        key={team.id}
+                        className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 dark:bg-green-900/20"
+                      >
+                        <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                          {team.name}
+                          {team.age_group && ` (${team.age_group})`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Child Selector (if multiple children) */}
       {children.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -319,117 +377,135 @@ export default function ParentDashboardClient() {
         </div>
       </div>
 
-      {/* Upcoming Activities */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Upcoming Activities
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Next 7 days
-          </p>
-        </div>
-
-        {dashboardLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-6 w-6 animate-spin text-green-600" />
-          </div>
-        ) : upcomingActivitiesCount === 0 ? (
-          <div className="p-8 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              No upcoming activities this week
+      {/* Upcoming Training and Matches - Side by Side */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Upcoming Training */}
+        <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Upcoming Training
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Next 7 days
             </p>
           </div>
-        ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {/* Training Sessions */}
-            {upcomingTraining.map((session) => (
-              <div key={session.id} className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/20">
-                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          Training Session
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {session.teams.name}
-                          {session.teams.age_group && ` (${session.teams.age_group})`}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                        Training
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(session.session_date)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {formatTime(session.start_time)} ({session.duration_minutes} min)
-                      </div>
-                      {session.location && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {session.location}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
 
-            {/* Matches */}
-            {upcomingMatches.map((match) => (
-              <div key={match.id} className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/20">
-                    <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          Match vs {match.away_team_name}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {match.teams.name}
-                          {match.teams.age_group && ` (${match.teams.age_group})`}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                        Match
-                      </span>
+          {dashboardLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+            </div>
+          ) : upcomingTraining.length === 0 ? (
+            <div className="p-8 text-center">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                No upcoming training sessions
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {upcomingTraining.map((session) => (
+                <div key={session.id} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/20">
+                      <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(match.match_date)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {formatTime(match.match_time)}
-                      </div>
-                      {match.venue && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {match.venue}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {session.teams.name}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {session.teams.age_group && `${session.teams.age_group} • `}
+                            {formatDate(session.session_date)}
+                          </p>
                         </div>
-                      )}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {formatTime(session.start_time)} ({session.duration_minutes} min)
+                        </div>
+                        {session.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {session.location}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Upcoming Matches */}
+        <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Upcoming Matches
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Next 7 days
+            </p>
           </div>
-        )}
+
+          {dashboardLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+            </div>
+          ) : upcomingMatches.length === 0 ? (
+            <div className="p-8 text-center">
+              <Trophy className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                No upcoming matches
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {upcomingMatches.map((match) => (
+                <div key={match.id} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/20">
+                      <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {match.teams.clubs?.name} - {match.teams.name}
+                            {match.teams.age_group && ` (${match.teams.age_group})`} vs {match.away_team_name}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                          {match.competition}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(match.match_date)}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {formatTime(match.start_time)}
+                        </div>
+                        {match.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {match.location}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Recent Attendance */}

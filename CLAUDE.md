@@ -1332,6 +1332,140 @@ async function DELETE(req: Request) {
 
 ---
 
+## Phase 8: Payment Management (✅ Phases 8.1, 8.3, 8.4 Complete)
+
+### 8.1 Subscription Fee Management ✅
+
+**Features Implemented:**
+- ✅ Subscription fees list per team
+- ✅ Set/update monthly fee for team
+- ✅ Track fee history (effective dates)
+- ✅ Shows most recent fee per team (current or scheduled)
+- ✅ "Generate Payments" button to create monthly records
+
+**Routes:**
+- `/club/[clubId]/payments/fees` - Subscription fees management page
+- `/club/[clubId]/payments` - Redirects to fees page
+
+**API Endpoints:**
+- `GET /api/club/subscription-fees?clubId=xxx` - Fetch teams with fees and player counts
+- `POST /api/club/subscription-fees` - Create new subscription fee
+- `PATCH /api/club/subscription-fees` - Update existing subscription fee
+
+**Components:**
+- `SetFeeModal.tsx` - Modal for setting/updating fees
+- Statistics cards: Total Teams, Teams with Fees, Total Monthly Revenue
+- Teams table with fee details and player counts
+
+**Deliverable:** ✅ Subscription fee management complete
+
+---
+
+### 8.3 Payment Record Generation ✅
+
+**Features Implemented:**
+- ✅ Manual payment generation via "Generate Payments" button
+- ✅ Month/Year selection
+- ✅ Generates records for all active players in club
+- ✅ Calculates amount_due from subscription fees
+- ✅ Sets due_date to 5th of selected month
+- ✅ Prevents duplicates using upsert with `ignoreDuplicates`
+- ✅ Warns about teams without subscription fees
+
+**API Endpoint:**
+- `POST /api/club/payments/generate` - Generate monthly payment records
+
+**Components:**
+- `GeneratePaymentsModal.tsx` - UI for manual generation with month/year selection
+
+**Technical Implementation:**
+- Uses Supabase `upsert` with `onConflict` and `ignoreDuplicates: true`
+- Avoids RLS permission issues by not querying existing records
+- Batches can be added later for scalability (1000s of players)
+
+**Future Enhancement:**
+- Netlify Scheduled Functions for automatic monthly generation
+
+**Deliverable:** ✅ Manual payment generation complete
+
+---
+
+### 8.4 Payment Tracking (Club Admin) ✅
+
+**Features Implemented:**
+- ✅ Payment records list page with comprehensive filtering
+- ✅ Statistics cards: Total Due, Collected, Outstanding, Collection Rate
+- ✅ Filters: Month, Year, Team, Status, Search by player name
+- ✅ Payment records table with all details
+- ✅ Color-coded status badges (Paid, Unpaid, Partial, Overdue, Waived)
+- ✅ "Mark as Paid" functionality with full payment details
+- ✅ Auto status updates (unpaid → overdue when past due date)
+- ✅ Partial payment support
+
+**Routes:**
+- `/club/[clubId]/payments/records` - Payment records list page
+- Link from fees page: "View Payment Records" button
+
+**API Endpoints:**
+- `GET /api/club/payments?clubId=xxx&month=10&year=2025` - Fetch payment records with filters
+- `PATCH /api/club/payments/[paymentId]` - Mark payment as paid
+
+**Components:**
+- `MarkAsPaidModal.tsx` - Modal for recording payment details
+- Payment records list with stats, filters, and table
+
+**Payment Recording Features:**
+- Amount paid (supports partial payments)
+- Payment method (Cash, Bank Transfer, Card, Other)
+- Payment date
+- Transaction reference (optional)
+- Notes (optional)
+
+**Status Auto-Calculation:**
+- `paid` - amount_paid >= amount_due
+- `partial` - 0 < amount_paid < amount_due
+- `unpaid` - amount_paid = 0 (and not past due)
+- `overdue` - unpaid and past due_date
+
+**Color Coding:**
+- Green: Paid
+- Yellow: Unpaid (within due date)
+- Orange: Partial
+- Red: Overdue
+- Gray: Waived
+
+**Permission System:**
+- Super admin: full access to all clubs
+- Club admin: access to their club's payments only
+- RLS policies enforce data isolation
+
+**Deliverable:** ✅ Payment tracking for club admins complete
+
+---
+
+**Remaining Payment Features:**
+
+### 8.2 Discount Management 📝
+- [ ] Create discounts list per player
+- [ ] Add discount form (%, fixed amount)
+- [ ] Discount reasons (sibling, hardship, merit, other)
+- [ ] Effective/end dates
+- [ ] Remove discount
+- [ ] Update payment generation to apply discounts
+
+### 8.5 Payment Tracking (Coach Portal) 📝
+- [ ] Create `/coach/payments` page
+- [ ] View payments for assigned teams only
+- [ ] Mark as paid (coach can record payments)
+- [ ] Same filtering as club admin view
+
+### 8.6 Payment Reminders 📝
+- [ ] Email reminders (3 days before, on due date, 3 days after, 7 days after)
+- [ ] Use Resend for email delivery
+- [ ] Netlify Scheduled Function for automation
+
+---
+
 **This workflow ensures we build Clubify.mk incrementally, with confidence, and with high quality.**
 
 🚀 **Let's build something great!**
